@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORY_OPTIONS } from "./CategoryTabs";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -14,6 +14,8 @@ function MenuSection({
   selectedCategory,
 }) {
   const sectionRefs = useRef({});
+  const [expandedCard, setExpandedCard] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
   const groupedSections = useMemo(() => {
     const groups = CATEGORY_OPTIONS.map((option) => ({
@@ -72,29 +74,96 @@ function MenuSection({
                   </span>
                 </div>
                 <div className="menu-grid">
-                  {section.items.map((item) => (
-                    <article
-                      className="menu-card"
-                      key={`${section.id}-${item.name}`}
-                    >
-                      {item.image_url && (
-                        <img
-                          src={item.image_url}
-                          alt={item.name}
-                          className="menu-image"
-                        />
-                      )}
-                      <div className="menu-body">
-                        <div className="menu-header">
-                          <h2>{item.name}</h2>
-                          <span className="price">
-                            {priceFormatter.format(Number(item.price))}
-                          </span>
+                  {section.items.map((item) => {
+                    const id = `${section.id}-${item.name}`;
+                    const isExpanded = expandedCard === id;
+                    return (
+                      <article
+                        className={
+                          "menu-card" + (isExpanded ? " expanded" : "")
+                        }
+                        key={id}
+                        role="button"
+                        tabIndex={0}
+                        aria-expanded={isExpanded}
+                        onClick={() => {
+                          if (isExpanded) {
+                            setExpandedCard(null);
+                          } else {
+                            setExpandedCard(id);
+                            setQuantity(1);
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            if (isExpanded) setExpandedCard(null);
+                            else {
+                              setExpandedCard(id);
+                              setQuantity(1);
+                            }
+                          }
+                        }}
+                      >
+                        {item.image_url && (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className={
+                              "menu-image" + (isExpanded ? " large" : "")
+                            }
+                          />
+                        )}
+                        <div className="menu-body">
+                          <div className="menu-header">
+                            <h2>{item.name}</h2>
+                            <span className="price">
+                              {priceFormatter.format(Number(item.price))}
+                            </span>
+                          </div>
+                          <p className="menu-description">{item.description}</p>
+
+                          {isExpanded && (
+                            <div className="card-actions">
+                              <div
+                                className="quantity-control"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <button
+                                  type="button"
+                                  aria-label="Decrease quantity"
+                                  onClick={() =>
+                                    setQuantity((q) => Math.max(1, q - 1))
+                                  }
+                                >
+                                  −
+                                </button>
+                                <span className="quantity">{quantity}</span>
+                                <button
+                                  type="button"
+                                  aria-label="Increase quantity"
+                                  onClick={() => setQuantity((q) => q + 1)}
+                                >
+                                  +
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                className="add-to-cart"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  /* intentionally no-op for now */
+                                }}
+                              >
+                                Add to cart
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <p className="menu-description">{item.description}</p>
-                      </div>
-                    </article>
-                  ))}
+                      </article>
+                    );
+                  })}
                 </div>
               </section>
             ))
