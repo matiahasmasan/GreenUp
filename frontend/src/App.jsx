@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import MenuSection from "./components/MenuSection";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs, { CATEGORY_OPTIONS } from "./components/CategoryTabs";
+import FooterBar from "./components/FooterBar";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -111,6 +112,7 @@ function App() {
         emptyMessage={emptyStateMessage}
         selectedCategory={activeCategory}
       />
+      <FooterBar />
     </div>
   );
 }

@@ -56,6 +56,7 @@ body {
   width: 100%;
   margin: 0 auto;
   padding: 0 0.75rem;
+  padding-bottom: 96px; /* space for fixed footer */
 }
 
 .hero {
@@ -377,6 +378,54 @@ h1 {
 
 .add-to-cart:active {
   transform: translateY(1px);
+}
+
+/* Bottom fixed footer / navbar */
+.footer-nav {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 16px;
+  width: calc(100% - 32px);
+  max-width: 720px;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 999px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  box-shadow: 0 8px 24px rgba(15, 41, 26, 0.12);
+  z-index: 50;
+  border: 1px solid rgba(15, 41, 26, 0.04);
+}
+
+.nav-item {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  color: var(--green-700);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nav-item i {
+  font-size: 1.15rem;
+}
+
+.nav-label {
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--green-600);
+}
+
+@media (min-width: 768px) {
+  .footer-nav {
+    bottom: 24px;
+    width: calc(100% - 120px);
+  }
 }
 
 .menu-image {
