@@ -92,7 +92,7 @@ function App() {
   return (
     <div className="app">
       <Hero />
-      <div className="menu-controls">
+      <div className="menu-controls shadow-2xl">
         <SearchBar
           value={searchTerm}
           onChange={setSearchTerm}
