@@ -4,7 +4,7 @@ function SearchBar({ value, onChange, disabled }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
+    <div className="max-w-7xl mx-auto p-2">
       <label className="search-bar">
         <span className="sr-only">Search menu items</span>
         <input

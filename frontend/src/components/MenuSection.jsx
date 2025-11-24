@@ -43,7 +43,7 @@ function MenuSection({
   }, [selectedCategory, groupedSections]);
 
   return (
-    <div className="max-w-7xl mx-auto p-4">
+    <div className="max-w-7xl mx-auto p-2">
       {loading && <p className="status">Loading menu…</p>}
       {error && <p className="status error">{error}</p>}
 
@@ -73,7 +73,10 @@ function MenuSection({
                 </div>
                 <div className="menu-grid">
                   {section.items.map((item) => (
-                    <article className="menu-card" key={`${section.id}-${item.name}`}>
+                    <article
+                      className="menu-card"
+                      key={`${section.id}-${item.name}`}
+                    >
                       {item.image_url && (
                         <img
                           src={item.image_url}
@@ -103,4 +106,3 @@ function MenuSection({
 }
 
 export default MenuSection;
-
