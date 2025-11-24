@@ -1,0 +1,142 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  color: #0f172a;
+  background-color: #f5f5f2;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero {
+  text-align: center;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-size: 0.75rem;
+  color: #4caf50;
+  margin-bottom: 0.75rem;
+}
+
+h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  margin: 0;
+}
+
+.subtitle {
+  max-width: 600px;
+  margin: 0.75rem auto 0;
+  color: #555;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 480px;
+  margin: 0 auto 2rem;
+  padding: 0.6rem 1rem;
+  border-radius: 999px;
+  border: 1.5px solid #0f172a;
+  background: #fff;
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  font-size: 1rem;
+  background: transparent;
+  font-family: inherit;
+  outline: none;
+}
+
+.search-bar svg {
+  width: 20px;
+  height: 20px;
+  color: #475569;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.status {
+  text-align: center;
+  color: #4caf50;
+  font-weight: 600;
+}
+
+.status.error {
+  color: #e11d48;
+}
+
+.menu-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.menu-card {
+  border-radius: 1.25rem;
+  background: #fff;
+  box-shadow: 0 15px 35px rgba(15, 23, 42, 0.1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-image {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.menu-body {
+  padding: 1.25rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.menu-header h2 {
+  font-size: 1.15rem;
+  margin: 0;
+}
+
+.price {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.menu-description {
+  margin: 0;
+  color: #475569;
+  line-height: 1.5;
+}
