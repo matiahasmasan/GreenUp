@@ -12,6 +12,7 @@ function MenuSection({
   menuItems,
   emptyMessage,
   selectedCategory,
+  onAddToCart,
 }) {
   const sectionRefs = useRef({});
   const [expandedCard, setExpandedCard] = useState(null);
@@ -43,6 +44,12 @@ function MenuSection({
       target.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   }, [selectedCategory, groupedSections]);
+
+  const handleAddToCart = (item, qty) => {
+    onAddToCart(item, qty);
+    setExpandedCard(null);
+    setQuantity(1);
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-2">
@@ -153,7 +160,7 @@ function MenuSection({
                                 className="add-to-cart"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  /* intentionally no-op for now */
+                                  handleAddToCart(item, quantity);
                                 }}
                               >
                                 Add to cart

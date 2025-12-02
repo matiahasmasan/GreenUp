@@ -16,6 +16,7 @@ function App() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,6 +102,43 @@ function App() {
     }
   };
 
+  const addToCart = (item, quantity) => {
+    setCartItems((prevItems) => {
+      const existingItem = prevItems.find((i) => i.id === item.id);
+
+      if (existingItem) {
+        return prevItems.map((i) =>
+          i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+        );
+      }
+
+      return [...prevItems, { ...item, quantity }];
+    });
+  };
+
+  const updateCartItemQuantity = (itemId, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    setCartItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      )
+    );
+  };
+
+  const removeFromCart = (itemId) => {
+    setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <div className="app">
       {route === "home" && (
@@ -124,13 +162,21 @@ function App() {
             menuItems={filteredItems}
             emptyMessage={emptyStateMessage}
             selectedCategory={activeCategory}
+            onAddToCart={addToCart}
           />
         </>
       )}
 
-      {route === "cart" && <Cart />}
+      {route === "cart" && (
+        <Cart
+          cartItems={cartItems}
+          onUpdateQuantity={updateCartItemQuantity}
+          onRemoveItem={removeFromCart}
+          onClearCart={clearCart}
+        />
+      )}
 
-      <FooterBar onNavigate={handleNavigate} />
+      <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
   );
 }
