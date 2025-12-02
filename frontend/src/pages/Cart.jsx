@@ -16,13 +16,8 @@ export default function Cart({ cartItems, onUpdateQuantity, onRemoveItem }) {
     return (
       <main className="cart-page page">
         <Hero />
-        <div className="max-w-7xl mx-auto p-2">
-          <div className="max-w-4xl mx-auto p-4">
-            <h1 className="text-3xl font-bold">Your Cart</h1>
-            <div className="status mt-4">
-              <p>Your cart is currently empty.</p>
-            </div>
-          </div>
+        <div className="status">
+          <p>Your cart is currently empty.</p>
         </div>
       </main>
     );
@@ -31,86 +26,80 @@ export default function Cart({ cartItems, onUpdateQuantity, onRemoveItem }) {
   return (
     <main className="cart-page page">
       <Hero />
-      <div className="max-w-7xl mx-auto p-2">
-        <div className="max-w-4xl mx-auto p-4">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold">Your Cart</h1>
-          </div>
 
-          <div className="space-y-4 mb-6">
-            {cartItems.map((item) => (
-              <div
-                key={item.cartKey}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex gap-2"
-              >
-                {item.image_url && (
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="w-24 h-24 object-cover rounded-lg"
-                  />
-                )}
+      <div className="cart-container">
+        <div className="category-header">
+          <h2>Your Cart</h2>
+          <span className="category-count">
+            {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+          </span>
+        </div>
 
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
-                  <p className="text-gray-600 text-sm mb-2 line-clamp-3">
-                    {item.description}
-                  </p>
-                </div>
+        <div className="cart-items">
+          {cartItems.map((item) => (
+            <div key={item.cartKey} className="cart-item">
+              {item.image_url && (
+                <img
+                  src={item.image_url}
+                  alt={item.name}
+                  className="cart-item-image"
+                />
+              )}
 
-                <div className="flex flex-col items-end justify-between">
+              <div className="cart-item-content">
+                <div className="cart-item-header">
+                  <h3>{item.name}</h3>
                   <button
                     onClick={() => onRemoveItem(item.cartKey)}
-                    className="text-red-500 hover:text-red-700"
+                    className="cart-remove-btn"
                     aria-label="Remove item"
                   >
-                    <i className="fas fa-times"></i>
+                    <i className="fas fa-trash-alt"></i>
                   </button>
+                </div>
+                <p className="menu-description">{item.description}</p>
 
-                  <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
+                <div className="cart-item-footer">
+                  <div className="quantity-control">
                     <button
                       onClick={() =>
                         onUpdateQuantity(item.cartKey, item.quantity - 1)
                       }
-                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded"
                       aria-label="Decrease quantity"
                     >
                       −
                     </button>
-                    <span className="w-8 text-center font-medium">
-                      {item.quantity}
-                    </span>
+                    <span className="quantity">{item.quantity}</span>
                     <button
                       onClick={() =>
                         onUpdateQuantity(item.cartKey, item.quantity + 1)
                       }
-                      className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded"
                       aria-label="Increase quantity"
                     >
                       +
                     </button>
                   </div>
 
-                  <p className="font-semibold text-lg">
+                  <p className="price">
                     {priceFormatter.format(Number(item.price) * item.quantity)}
                   </p>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div className="status p-4">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xl font-bold">Total</span>
-              <span className="text-xl font-bold">
-                {priceFormatter.format(total)}
-              </span>
             </div>
+          ))}
+        </div>
 
-            <button className="add-to-cart w-full" style={{ marginTop: 8 }}>
-              Proceed to Checkout
-            </button>
+        <div className="cart-summary">
+          <div className="cart-summary-row">
+            <span className="cart-summary-label">Subtotal</span>
+            <span className="cart-summary-total">
+              {priceFormatter.format(total)}
+            </span>
           </div>
+          <p className="cart-summary-note">
+            Shipping and taxes calculated at checkout
+          </p>
+          <button className="add-to-cart">Proceed to Checkout</button>
         </div>
       </div>
     </main>
