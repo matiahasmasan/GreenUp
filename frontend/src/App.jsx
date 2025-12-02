@@ -5,10 +5,12 @@ import MenuSection from "./components/MenuSection";
 import SearchBar from "./components/SearchBar";
 import CategoryTabs, { CATEGORY_OPTIONS } from "./components/CategoryTabs";
 import FooterBar from "./components/FooterBar";
+import Cart from "./pages/Cart";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 function App() {
+  const [route, setRoute] = useState("home");
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -90,29 +92,45 @@ function App() {
         : "No menu items available yet."
       : "";
 
+  const handleNavigate = (key) => {
+    if (key === "home") setRoute("home");
+    else if (key === "cart") setRoute("cart");
+    else if (key === "flag") {
+      // placeholder for language toggle
+      console.log("Toggle language (not implemented)");
+    }
+  };
+
   return (
     <div className="app">
-      <Hero />
-      <div className="menu-controls">
-        <SearchBar
-          value={searchTerm}
-          onChange={setSearchTerm}
-          disabled={loading}
-        />
-        <CategoryTabs
-          activeCategory={activeCategory}
-          onSelect={setActiveCategory}
-          availableCategoryIds={availableCategoryIds}
-        />
-      </div>
-      <MenuSection
-        loading={loading}
-        error={error}
-        menuItems={filteredItems}
-        emptyMessage={emptyStateMessage}
-        selectedCategory={activeCategory}
-      />
-      <FooterBar />
+      {route === "home" && (
+        <>
+          <Hero />
+          <div className="menu-controls">
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              disabled={loading}
+            />
+            <CategoryTabs
+              activeCategory={activeCategory}
+              onSelect={setActiveCategory}
+              availableCategoryIds={availableCategoryIds}
+            />
+          </div>
+          <MenuSection
+            loading={loading}
+            error={error}
+            menuItems={filteredItems}
+            emptyMessage={emptyStateMessage}
+            selectedCategory={activeCategory}
+          />
+        </>
+      )}
+
+      {route === "cart" && <Cart />}
+
+      <FooterBar onNavigate={handleNavigate} />
     </div>
   );
 }

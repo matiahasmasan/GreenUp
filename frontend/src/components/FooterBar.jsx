@@ -1,10 +1,6 @@
 import React from "react";
 
-function FooterBar() {
-  const handleNav = (key) => {
-    console.log(`Navigating to: ${key}`);
-  };
-
+function FooterBar({ onNavigate = () => {} }) {
   return (
     <footer
       className="footer-nav"
@@ -14,7 +10,7 @@ function FooterBar() {
       <button
         type="button"
         className="nav-item"
-        onClick={() => handleNav("home")}
+        onClick={() => onNavigate("home")}
         aria-label="Home"
       >
         <i className="fas fa-home" aria-hidden="true"></i>
@@ -24,7 +20,7 @@ function FooterBar() {
       <button
         type="button"
         className="nav-item"
-        onClick={() => handleNav("cart")}
+        onClick={() => onNavigate("cart")}
         aria-label="Cart"
       >
         <i className="fas fa-shopping-cart" aria-hidden="true"></i>
@@ -34,7 +30,7 @@ function FooterBar() {
       <button
         type="button"
         className="nav-item"
-        onClick={() => handleNav("flag")}
+        onClick={() => onNavigate("flag")}
         aria-label="Toggle language"
       >
         <i className="fas fa-flag" aria-hidden="true"></i>
