@@ -6,7 +6,12 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export default function Cart({ cartItems, onUpdateQuantity, onRemoveItem }) {
+export default function Cart({
+  cartItems,
+  onUpdateQuantity,
+  onRemoveItem,
+  onNavigate,
+}) {
   const total = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
     0
@@ -99,7 +104,12 @@ export default function Cart({ cartItems, onUpdateQuantity, onRemoveItem }) {
           <p className="cart-summary-note">
             Shipping and taxes calculated at checkout
           </p>
-          <button className="add-to-cart">Proceed to Checkout</button>
+          <button
+            className="add-to-cart"
+            onClick={() => onNavigate && onNavigate("checkout")}
+          >
+            Proceed to Checkout
+          </button>
         </div>
       </div>
     </main>

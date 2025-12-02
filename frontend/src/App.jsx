@@ -6,6 +6,7 @@ import SearchBar from "./components/SearchBar";
 import CategoryTabs, { CATEGORY_OPTIONS } from "./components/CategoryTabs";
 import FooterBar from "./components/FooterBar";
 import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -96,6 +97,7 @@ function App() {
   const handleNavigate = (key) => {
     if (key === "home") setRoute("home");
     else if (key === "cart") setRoute("cart");
+    else if (key === "checkout") setRoute("checkout");
     else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
@@ -175,8 +177,11 @@ function App() {
           cartItems={cartItems}
           onUpdateQuantity={updateCartItemQuantity}
           onRemoveItem={removeFromCart}
+          onNavigate={handleNavigate}
         />
       )}
+
+      {route === "checkout" && <Checkout />}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
