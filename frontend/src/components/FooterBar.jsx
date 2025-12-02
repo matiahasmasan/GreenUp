@@ -1,6 +1,6 @@
 import React from "react";
 
-function FooterBar({ onNavigate = () => {} }) {
+function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
   return (
     <footer
       className="footer-nav"
@@ -24,6 +24,16 @@ function FooterBar({ onNavigate = () => {} }) {
         aria-label="Cart"
       >
         <i className="fas fa-shopping-cart" aria-hidden="true"></i>
+        {cartItemCount > 0 && (
+          <span
+            className="cart-badge"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            {cartItemCount}
+          </span>
+        )}
         <span className="nav-label">Cart</span>
       </button>
 
