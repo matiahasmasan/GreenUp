@@ -50,7 +50,7 @@ export default function Cart({
         <div className="space-y-4 mb-6">
           {cartItems.map((item) => (
             <div
-              key={item.id}
+              key={item.cartKey}
               className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex gap-4"
             >
               {item.image_url && (
@@ -63,17 +63,14 @@ export default function Cart({
 
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
-                <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+                <p className="text-gray-600 text-sm mb-2 line-clamp-3">
                   {item.description}
-                </p>
-                <p className="font-medium text-gray-900">
-                  {priceFormatter.format(Number(item.price))}
                 </p>
               </div>
 
               <div className="flex flex-col items-end justify-between">
                 <button
-                  onClick={() => onRemoveItem(item.id)}
+                  onClick={() => onRemoveItem(item.cartKey)}
                   className="text-red-500 hover:text-red-700 text-sm"
                   aria-label="Remove item"
                 >
@@ -82,7 +79,9 @@ export default function Cart({
 
                 <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">
                   <button
-                    onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                    onClick={() =>
+                      onUpdateQuantity(item.cartKey, item.quantity - 1)
+                    }
                     className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded"
                     aria-label="Decrease quantity"
                   >
@@ -92,7 +91,9 @@ export default function Cart({
                     {item.quantity}
                   </span>
                   <button
-                    onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                    onClick={() =>
+                      onUpdateQuantity(item.cartKey, item.quantity + 1)
+                    }
                     className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded"
                     aria-label="Increase quantity"
                   >

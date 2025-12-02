@@ -104,33 +104,40 @@ function App() {
 
   const addToCart = (item, quantity) => {
     setCartItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i.id === item.id);
+      const itemKey = `${item.name}-${item.price}`;
+      const existingItem = prevItems.find(
+        (i) => `${i.name}-${i.price}` === itemKey
+      );
 
       if (existingItem) {
         return prevItems.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+          `${i.name}-${i.price}` === itemKey
+            ? { ...i, quantity: i.quantity + quantity }
+            : i
         );
       }
 
-      return [...prevItems, { ...item, quantity }];
+      return [...prevItems, { ...item, quantity, cartKey: itemKey }];
     });
   };
 
-  const updateCartItemQuantity = (itemId, newQuantity) => {
+  const updateCartItemQuantity = (itemKey, newQuantity) => {
     if (newQuantity <= 0) {
-      removeFromCart(itemId);
+      removeFromCart(itemKey);
       return;
     }
 
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
+        item.cartKey === itemKey ? { ...item, quantity: newQuantity } : item
       )
     );
   };
 
-  const removeFromCart = (itemId) => {
-    setCartItems((prevItems) => prevItems.filter((item) => item.id !== itemId));
+  const removeFromCart = (itemKey) => {
+    setCartItems((prevItems) =>
+      prevItems.filter((item) => item.cartKey !== itemKey)
+    );
   };
 
   const clearCart = () => {
