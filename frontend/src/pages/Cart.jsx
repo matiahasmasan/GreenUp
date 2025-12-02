@@ -6,12 +6,7 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export default function Cart({
-  cartItems,
-  onUpdateQuantity,
-  onRemoveItem,
-  onClearCart,
-}) {
+export default function Cart({ cartItems, onUpdateQuantity, onRemoveItem }) {
   const total = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
     0
@@ -39,12 +34,6 @@ export default function Cart({
       <div className="max-w-4xl mx-auto p-4">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">Your Cart</h1>
-          <button
-            onClick={onClearCart}
-            className="text-red-600 hover:text-red-800 text-sm font-medium"
-          >
-            Clear Cart
-          </button>
         </div>
 
         <div className="space-y-4 mb-6">
@@ -71,10 +60,10 @@ export default function Cart({
               <div className="flex flex-col items-end justify-between">
                 <button
                   onClick={() => onRemoveItem(item.cartKey)}
-                  className="text-red-500 hover:text-red-700 text-sm"
+                  className="text-red-500 hover:text-red-700"
                   aria-label="Remove item"
                 >
-                  Remove
+                  <i className="fas fa-times"></i>
                 </button>
 
                 <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-2 py-1">

@@ -140,10 +140,6 @@ function App() {
     );
   };
 
-  const clearCart = () => {
-    setCartItems([]);
-  };
-
   const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -179,7 +175,6 @@ function App() {
           cartItems={cartItems}
           onUpdateQuantity={updateCartItemQuantity}
           onRemoveItem={removeFromCart}
-          onClearCart={clearCart}
         />
       )}
 
