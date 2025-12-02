@@ -181,7 +181,9 @@ function App() {
         />
       )}
 
-      {route === "checkout" && <Checkout />}
+      {route === "checkout" && (
+        <Checkout cartItems={cartItems} onNavigate={handleNavigate} />
+      )}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
