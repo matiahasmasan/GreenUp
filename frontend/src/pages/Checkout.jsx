@@ -6,7 +6,7 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export default function Checkout({ cartItems, onNavigate }) {
+export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
   // read `table` param from URL to simulate QR selection (e.g. ?table=1)
   const params =
     typeof window !== "undefined"
@@ -57,8 +57,16 @@ export default function Checkout({ cartItems, onNavigate }) {
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
       alert("Order placed successfully!");
-      // TODO: Navigate to order confirmation page
-      onNavigate && onNavigate("menu");
+      // set last order and navigate to confirmation page
+      const order = {
+        customerName: name,
+        table,
+        paymentMethod,
+        total,
+        items: cartItems,
+      };
+      onSetLastOrder && onSetLastOrder(order);
+      onNavigate && onNavigate("confirmed");
     } catch (error) {
       alert("Error placing order. Please try again.");
       console.error("Order error:", error);

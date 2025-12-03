@@ -7,6 +7,7 @@ import CategoryTabs, { CATEGORY_OPTIONS } from "./components/CategoryTabs";
 import FooterBar from "./components/FooterBar";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
+import ConfirmedOrder from "./pages/ConfirmedOrder";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -18,6 +19,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [lastOrder, setLastOrder] = useState(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,9 +97,10 @@ function App() {
       : "";
 
   const handleNavigate = (key) => {
-    if (key === "home") setRoute("home");
+    if (key === "home" || key === "menu") setRoute("home");
     else if (key === "cart") setRoute("cart");
     else if (key === "checkout") setRoute("checkout");
+    else if (key === "confirmed") setRoute("confirmed");
     else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
@@ -182,7 +185,15 @@ function App() {
       )}
 
       {route === "checkout" && (
-        <Checkout cartItems={cartItems} onNavigate={handleNavigate} />
+        <Checkout
+          cartItems={cartItems}
+          onNavigate={handleNavigate}
+          onSetLastOrder={setLastOrder}
+        />
+      )}
+
+      {route === "confirmed" && (
+        <ConfirmedOrder lastOrder={lastOrder} onNavigate={handleNavigate} />
       )}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
