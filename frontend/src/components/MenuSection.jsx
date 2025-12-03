@@ -84,16 +84,22 @@ function MenuSection({
                   {section.items.map((item) => {
                     const id = `${section.id}-${item.name}`;
                     const isExpanded = expandedCard === id;
+                    const isUnavailable =
+                      item.is_available === 0 || item.is_available === false;
                     return (
                       <article
                         className={
-                          "menu-card" + (isExpanded ? " expanded" : "")
+                          "menu-card" +
+                          (isExpanded ? " expanded" : "") +
+                          (isUnavailable ? " unavailable" : "")
                         }
                         key={id}
                         role="button"
-                        tabIndex={0}
+                        tabIndex={isUnavailable ? -1 : 0}
                         aria-expanded={isExpanded}
+                        aria-disabled={isUnavailable}
                         onClick={() => {
+                          if (isUnavailable) return;
                           if (isExpanded) {
                             setExpandedCard(null);
                           } else {
@@ -102,6 +108,7 @@ function MenuSection({
                           }
                         }}
                         onKeyDown={(e) => {
+                          if (isUnavailable) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             if (isExpanded) setExpandedCard(null);
@@ -130,7 +137,7 @@ function MenuSection({
                           </div>
                           <p className="menu-description">{item.description}</p>
 
-                          {isExpanded && (
+                          {isExpanded && !isUnavailable && (
                             <div className="card-actions">
                               <div
                                 className="quantity-control"
@@ -165,6 +172,18 @@ function MenuSection({
                               >
                                 Add to cart
                               </button>
+                            </div>
+                          )}
+                          {isExpanded && isUnavailable && (
+                            <div
+                              style={{
+                                padding: "0.75rem 0",
+                                textAlign: "center",
+                                color: "var(--green-500)",
+                                fontWeight: 600,
+                              }}
+                            >
+                              Out of Stock
                             </div>
                           )}
                         </div>

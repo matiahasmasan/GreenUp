@@ -23,7 +23,7 @@ const pool = mysql.createPool({
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT name, description, price, image_url, category_id FROM menu_items ORDER BY category_id ASC, name ASC"
+      "SELECT name, description, price, image_url, category_id, is_available FROM menu_items ORDER BY category_id ASC, name ASC"
     );
     res.json(rows);
   } catch (err) {
@@ -44,12 +44,10 @@ app.post("/orders", async (req, res) => {
     !items ||
     items.length === 0
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "Missing required fields: customerName, table, paymentMethod, items",
-      });
+    return res.status(400).json({
+      error:
+        "Missing required fields: customerName, table, paymentMethod, items",
+    });
   }
 
   const conn = await pool.getConnection();

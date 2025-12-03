@@ -311,6 +311,26 @@ h1 {
   background: var(--gray-50);
 }
 
+/* Unavailable item styles */
+.menu-card.unavailable {
+  opacity: 0.6;
+  background: var(--gray-50);
+  cursor: not-allowed;
+  pointer-events: none;
+  border-color: var(--gray-300);
+}
+
+.menu-card.unavailable .menu-image {
+  opacity: 0.5;
+  filter: grayscale(100%);
+}
+
+.menu-card.unavailable h2,
+.menu-card.unavailable .price,
+.menu-card.unavailable .menu-description {
+  color: var(--gray-500);
+}
+
 /* Expanded card styles */
 .menu-card.expanded {
   flex-direction: column;
