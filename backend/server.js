@@ -32,6 +32,84 @@ app.get("/menu-items", async (_req, res) => {
   }
 });
 
+// POST /orders - Create a new order
+app.post("/orders", async (req, res) => {
+  const { customerName, table, paymentMethod, items, total } = req.body;
+
+  // Validate required fields
+  if (
+    !customerName ||
+    !table ||
+    !paymentMethod ||
+    !items ||
+    items.length === 0
+  ) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "Missing required fields: customerName, table, paymentMethod, items",
+      });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // Insert order
+    const [orderResult] = await conn.query(
+      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount) VALUES (?, ?, ?, ?)",
+      [customerName, table, paymentMethod, total || 0]
+    );
+
+    const orderId = orderResult.insertId;
+
+    // Insert order items
+    for (const item of items) {
+      const subtotal = Number(item.price) * item.quantity;
+      await conn.query(
+        "INSERT INTO order_items (order_id, item_name, item_price, quantity, subtotal) VALUES (?, ?, ?, ?, ?)",
+        [orderId, item.name, item.price, item.quantity, subtotal]
+      );
+    }
+
+    await conn.commit();
+
+    res.status(201).json({
+      success: true,
+      orderId,
+      message: "Order created successfully",
+    });
+  } catch (err) {
+    await conn.rollback();
+    console.error("Failed to create order", err);
+    res.status(500).json({ error: "Failed to create order" });
+  } finally {
+    conn.release();
+  }
+});
+
+// GET /orders - Retrieve all orders (optional, for kitchen/manager view)
+app.get("/orders", async (_req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT o.id, o.customer_name, o.table_number, o.payment_method, 
+              o.total_amount, o.status, o.created_at, 
+              JSON_ARRAYAGG(
+                JSON_OBJECT('item_name', oi.item_name, 'item_price', oi.item_price, 'quantity', oi.quantity)
+              ) as items
+       FROM orders o
+       LEFT JOIN order_items oi ON o.id = oi.order_id
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch orders", err);
+    res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`);

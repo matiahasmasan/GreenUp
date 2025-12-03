@@ -60,17 +60,30 @@ export default function Checkout({
     setIsProcessing(true);
 
     try {
-      // TODO: Send order to backend
-      console.log("Order submitted:", {
-        items: cartItems,
-        customerName: name,
-        table,
-        paymentMethod,
-        total,
+      const API_BASE_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:4000";
+
+      // Send order to backend
+      const response = await fetch(`${API_BASE_URL}/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerName: name,
+          table,
+          paymentMethod,
+          items: cartItems,
+          total,
+        }),
       });
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to place order");
+      }
+
+      const result = await response.json();
 
       // set last order and navigate to confirmation page
       const order = {
@@ -79,18 +92,19 @@ export default function Checkout({
         paymentMethod,
         total,
         items: cartItems,
+        orderId: result.orderId,
       };
       onSetLastOrder && onSetLastOrder(order);
       // clear the cart now that order is placed
       onClearCart && onClearCart();
-      // show a brief non-blocking success message before navigating (optional)
+      // show a brief non-blocking success message before navigating
       setStatus({ type: "success", text: "Order placed successfully!" });
       // navigate to confirmed page
       onNavigate && onNavigate("confirmed");
     } catch (error) {
       setStatus({
         type: "error",
-        text: "Error placing order. Please try again.",
+        text: error.message || "Error placing order. Please try again.",
       });
       console.error("Order error:", error);
     } finally {
