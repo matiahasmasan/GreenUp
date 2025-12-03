@@ -18,6 +18,7 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
   const [table, setTable] = useState(initialTable);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [status, setStatus] = useState(null); // { type: 'success'|'error', text: string }
 
   const total = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
@@ -28,16 +29,26 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
     return name.trim() && table.toString().trim();
   };
 
+  // auto-clear status after a short time
+  React.useEffect(() => {
+    if (!status) return;
+    const t = setTimeout(() => setStatus(null), 4000);
+    return () => clearTimeout(t);
+  }, [status]);
+
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
     if (!isFormValid()) {
-      alert("Please enter your name");
+      setStatus({
+        type: "error",
+        text: "Please enter your name and table number.",
+      });
       return;
     }
 
     if (cartItems.length === 0) {
-      alert("Your cart is empty");
+      setStatus({ type: "error", text: "Your cart is empty." });
       return;
     }
 
@@ -54,9 +65,8 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
       });
 
       // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1200));
 
-      alert("Order placed successfully!");
       // set last order and navigate to confirmation page
       const order = {
         customerName: name,
@@ -66,9 +76,15 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
         items: cartItems,
       };
       onSetLastOrder && onSetLastOrder(order);
+      // show a brief non-blocking success message before navigating (optional)
+      setStatus({ type: "success", text: "Order placed successfully!" });
+      // navigate immediately — no blocking alert
       onNavigate && onNavigate("confirmed");
     } catch (error) {
-      alert("Error placing order. Please try again.");
+      setStatus({
+        type: "error",
+        text: "Error placing order. Please try again.",
+      });
       console.error("Order error:", error);
     } finally {
       setIsProcessing(false);
@@ -97,6 +113,14 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
             {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
           </span>
         </div>
+        {status && (
+          <div
+            className={"status" + (status.type === "error" ? " error" : "")}
+            style={{ margin: "0 0 1rem" }}
+          >
+            {status.text}
+          </div>
+        )}
 
         <form onSubmit={handleSubmitOrder} className="checkout-form">
           {/* Customer Name Section */}
@@ -107,7 +131,10 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
                 type="text"
                 id="name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setStatus(null);
+                }}
                 placeholder="John Doe"
                 required
               />
@@ -119,7 +146,10 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
                 type="text"
                 id="table"
                 value={table}
-                onChange={(e) => setTable(e.target.value)}
+                onChange={(e) => {
+                  setTable(e.target.value);
+                  setStatus(null);
+                }}
                 placeholder="1"
                 required
               />
