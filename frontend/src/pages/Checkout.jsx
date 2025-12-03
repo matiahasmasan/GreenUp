@@ -6,7 +6,12 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
+export default function Checkout({
+  cartItems,
+  onNavigate,
+  onSetLastOrder,
+  onClearCart,
+}) {
   // read `table` param from URL to simulate QR selection (e.g. ?table=1)
   const params =
     typeof window !== "undefined"
@@ -76,9 +81,11 @@ export default function Checkout({ cartItems, onNavigate, onSetLastOrder }) {
         items: cartItems,
       };
       onSetLastOrder && onSetLastOrder(order);
+      // clear the cart now that order is placed
+      onClearCart && onClearCart();
       // show a brief non-blocking success message before navigating (optional)
       setStatus({ type: "success", text: "Order placed successfully!" });
-      // navigate immediately — no blocking alert
+      // navigate to confirmed page
       onNavigate && onNavigate("confirmed");
     } catch (error) {
       setStatus({

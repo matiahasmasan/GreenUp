@@ -14,7 +14,7 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
         <div className="status">
           <p>No recent order found.</p>
           <button
-            className="add-to-cart"
+            className="checkout-back"
             onClick={() => onNavigate && onNavigate("menu")}
           >
             Back to Menu
@@ -24,13 +24,12 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
     );
   }
 
-  // estimate: simple fixed value (e.g., 25-35 minutes)
   const estimated = "Approx. 25-35 minutes";
 
   const total =
     lastOrder.total ||
     (lastOrder.items || []).reduce(
-      (s, it) => s + Number(it.price) * it.quantity,
+      (sum, it) => sum + Number(it.price) * it.quantity,
       0
     );
 
@@ -76,12 +75,6 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
           <p style={{ marginTop: "1rem", fontWeight: 600 }}>{estimated}</p>
 
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-            <button
-              className="add-to-cart"
-              onClick={() => onNavigate && onNavigate("menu")}
-            >
-              Continue Browsing
-            </button>
             <button
               className="checkout-back"
               onClick={() => onNavigate && onNavigate("menu")}

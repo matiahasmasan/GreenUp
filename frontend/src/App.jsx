@@ -189,6 +189,7 @@ function App() {
           cartItems={cartItems}
           onNavigate={handleNavigate}
           onSetLastOrder={setLastOrder}
+          onClearCart={() => setCartItems([])}
         />
       )}
 
