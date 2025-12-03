@@ -7,7 +7,15 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export default function Checkout({ cartItems, onNavigate }) {
+  // read `table` param from URL to simulate QR selection (e.g. ?table=1)
+  const params =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const initialTable = params ? params.get("table") || "" : "";
+
   const [name, setName] = useState("");
+  const [table, setTable] = useState(initialTable);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -17,7 +25,7 @@ export default function Checkout({ cartItems, onNavigate }) {
   );
 
   const isFormValid = () => {
-    return name.trim();
+    return name.trim() && table.toString().trim();
   };
 
   const handleSubmitOrder = async (e) => {
@@ -40,6 +48,7 @@ export default function Checkout({ cartItems, onNavigate }) {
       console.log("Order submitted:", {
         items: cartItems,
         customerName: name,
+        table,
         paymentMethod,
         total,
       });
@@ -95,6 +104,18 @@ export default function Checkout({ cartItems, onNavigate }) {
                 required
               />
             </div>
+
+            <div className="form-group">
+              <label htmlFor="table">Table *</label>
+              <input
+                type="text"
+                id="table"
+                value={table}
+                onChange={(e) => setTable(e.target.value)}
+                placeholder="1"
+                required
+              />
+            </div>
           </section>
 
           {/* Payment Method Section */}
@@ -120,7 +141,7 @@ export default function Checkout({ cartItems, onNavigate }) {
                       Credit/Debit Card
                     </span>
                     <span className="payment-option-desc">
-                      Secure payment with Visa, Mastercard, or Amex
+                      Secure payment with Card
                     </span>
                   </div>
                 </div>
