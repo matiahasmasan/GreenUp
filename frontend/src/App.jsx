@@ -30,6 +30,20 @@ function App() {
   const [lastOrder, setLastOrder] = useState(null);
 
   useEffect(() => {
+    const handleHashChange = () => {
+      try {
+        const hash = window.location.hash.replace(/^#/, "");
+        setRoute(hash || "home");
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
+  useEffect(() => {
     const controller = new AbortController();
 
     async function fetchMenu() {
@@ -110,11 +124,12 @@ function App() {
     else if (key === "checkout") setRoute("checkout");
     else if (key === "confirmed") setRoute("confirmed");
     else if (key === "admin") setRoute("admin");
+    else if (key === "admin-dashboard") setRoute("admin-dashboard");
     else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
     }
-    // keep route in the URL hash so admin can be opened directly
+    // keep route in the URL hash so pages can be opened directly
     try {
       window.location.hash = key;
     } catch (e) {
@@ -213,6 +228,27 @@ function App() {
       )}
 
       {route === "admin" && <AdminLogin onNavigate={handleNavigate} />}
+
+      {route === "admin-dashboard" && (
+        <div className="checkout-container" style={{ paddingTop: 24 }}>
+          <div
+            className="checkout-section"
+            style={{ maxWidth: 560, margin: "0 auto" }}
+          >
+            <h2 className="checkout-section-title">Admin Dashboard</h2>
+            <p style={{ marginTop: 12 }}>
+              Welcome to the admin dashboard. UI coming soon...
+            </p>
+            <button
+              className="checkout-back"
+              onClick={() => handleNavigate("home")}
+              style={{ marginTop: 12 }}
+            >
+              Back to Home
+            </button>
+          </div>
+        </div>
+      )}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
