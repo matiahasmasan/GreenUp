@@ -1,6 +1,7 @@
 import { useState } from "react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const HARDCODED_USERNAME = "admin";
+const HARDCODED_PASSWORD = "admin";
 
 export default function AdminLogin({ onNavigate }) {
   const [username, setUsername] = useState("");
@@ -16,26 +17,22 @@ export default function AdminLogin({ onNavigate }) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
+      // Simulate async login with hardcoded credentials
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Login failed");
-      }
+      if (username === HARDCODED_USERNAME && password === HARDCODED_PASSWORD) {
+        // Store token in localStorage for now
+        const token = btoa(JSON.stringify({ username, role: "admin" }));
+        localStorage.setItem("adminToken", token);
+        setSuccess("Login successful — redirecting...");
 
-      const data = await res.json();
-      // store token in localStorage for now (no security concerns requested)
-      if (data && data.token) {
-        localStorage.setItem("adminToken", data.token);
+        // Navigate to admin dashboard after a short delay
+        setTimeout(() => {
+          onNavigate?.("admin-dashboard");
+        }, 1000);
       } else {
-        localStorage.setItem("adminToken", JSON.stringify(data));
+        throw new Error("Invalid username or password");
       }
-
-      setSuccess("Login successful — token saved to localStorage.");
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
