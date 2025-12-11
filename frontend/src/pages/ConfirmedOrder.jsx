@@ -15,7 +15,7 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
           <p>No recent order found.</p>
           <button
             className="checkout-back"
-            onClick={() => onNavigate && onNavigate("menu")}
+            onClick={() => onNavigate && onNavigate("home")}
           >
             Back to Menu
           </button>
@@ -77,7 +77,7 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
             <button
               className="checkout-back"
-              onClick={() => onNavigate && onNavigate("menu")}
+              onClick={() => onNavigate && onNavigate("home")}
             >
               Back to Menu
             </button>
