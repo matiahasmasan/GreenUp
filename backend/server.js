@@ -2,8 +2,12 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || "dev_jwt_secret";
 
 const app = express();
 app.use(cors());
@@ -105,6 +109,61 @@ app.get("/orders", async (_req, res) => {
   } catch (err) {
     console.error("Failed to fetch orders", err);
     res.status(500).json({ error: "Failed to fetch orders" });
+  }
+});
+
+// POST /auth/login - simple login that returns a JWT (no route protection enforced yet)
+app.post("/auth/login", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: "Missing username or password" });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, username, password_hash, password, role FROM users WHERE username = ? LIMIT 1",
+      [username]
+    );
+
+    if (!rows || rows.length === 0) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const user = rows[0];
+    // Support either `password_hash` or `password` column names depending on schema
+    const storedHash = user.password_hash || user.password;
+
+    if (!storedHash) {
+      console.error("No password hash found for user:", user);
+      return res
+        .status(500)
+        .json({ error: "User record is missing password hash" });
+    }
+
+    const match = await bcrypt.compare(password, storedHash);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (err) {
+    console.error("Login error", err);
+    res.status(500).json({ error: "Login failed" });
   }
 });
 
