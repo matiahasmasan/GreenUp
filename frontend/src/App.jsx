@@ -8,11 +8,19 @@ import FooterBar from "./components/FooterBar";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ConfirmedOrder from "./pages/ConfirmedOrder";
+import AdminLogin from "./pages/AdminLogin";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 function App() {
-  const [route, setRoute] = useState("home");
+  const [route, setRoute] = useState(() => {
+    try {
+      const hash = window.location.hash.replace(/^#/, "");
+      return hash || "home";
+    } catch (e) {
+      return "home";
+    }
+  });
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -101,9 +109,16 @@ function App() {
     else if (key === "cart") setRoute("cart");
     else if (key === "checkout") setRoute("checkout");
     else if (key === "confirmed") setRoute("confirmed");
+    else if (key === "admin") setRoute("admin");
     else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
+    }
+    // keep route in the URL hash so admin can be opened directly
+    try {
+      window.location.hash = key;
+    } catch (e) {
+      // ignore in environments where window isn't available
     }
   };
 
@@ -196,6 +211,8 @@ function App() {
       {route === "confirmed" && (
         <ConfirmedOrder lastOrder={lastOrder} onNavigate={handleNavigate} />
       )}
+
+      {route === "admin" && <AdminLogin onNavigate={handleNavigate} />}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
