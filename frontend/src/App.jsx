@@ -9,10 +9,20 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import ConfirmedOrder from "./pages/ConfirmedOrder";
 import AdminLogin from "./pages/AdminLogin";
+import ClientHome from "./pages/client/Home";
+import OperatorDashboard from "./pages/operator/Dashboard";
+import AdminDashboard from "./pages/admin/Dashboard";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import {
+  setAuthToken,
+  getCurrentUser,
+  logout as logoutAuth,
+} from "./utils/authUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-function App() {
+function AppContent() {
+  const { user, logout } = useAuth();
   const [route, setRoute] = useState(() => {
     try {
       const hash = window.location.hash.replace(/^#/, "");
@@ -125,7 +135,12 @@ function App() {
     else if (key === "confirmed") setRoute("confirmed");
     else if (key === "admin") setRoute("admin");
     else if (key === "admin-dashboard") setRoute("admin-dashboard");
-    else if (key === "flag") {
+    else if (key === "operator-dashboard") setRoute("operator-dashboard");
+    else if (key === "logout") {
+      logout();
+      setRoute("home");
+      setCartItems([]);
+    } else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
     }
@@ -181,27 +196,7 @@ function App() {
     <div className="app">
       {route === "home" && (
         <>
-          <Hero />
-          <div className="menu-controls">
-            <SearchBar
-              value={searchTerm}
-              onChange={setSearchTerm}
-              disabled={loading}
-            />
-            <CategoryTabs
-              activeCategory={activeCategory}
-              onSelect={setActiveCategory}
-              availableCategoryIds={availableCategoryIds}
-            />
-          </div>
-          <MenuSection
-            loading={loading}
-            error={error}
-            menuItems={filteredItems}
-            emptyMessage={emptyStateMessage}
-            selectedCategory={activeCategory}
-            onAddToCart={addToCart}
-          />
+          <ClientHome onNavigate={handleNavigate} onAddToCart={addToCart} />
         </>
       )}
 
@@ -250,8 +245,20 @@ function App() {
         </div>
       )}
 
+      {route === "operator-dashboard" && (
+        <OperatorDashboard onNavigate={handleNavigate} />
+      )}
+
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

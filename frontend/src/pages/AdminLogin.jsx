@@ -1,9 +1,14 @@
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import { setAuthToken } from "../utils/authUtils";
 
-const HARDCODED_USERNAME = "admin";
-const HARDCODED_PASSWORD = "admin";
+const HARDCODED_CREDENTIALS = {
+  admin: { password: "admin", role: "admin" },
+  operator: { password: "operator", role: "operator" },
+};
 
 export default function AdminLogin({ onNavigate }) {
+  const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,19 +25,31 @@ export default function AdminLogin({ onNavigate }) {
       // Simulate async login with hardcoded credentials
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      if (username === HARDCODED_USERNAME && password === HARDCODED_PASSWORD) {
-        // Store token in localStorage for now
-        const token = btoa(JSON.stringify({ username, role: "admin" }));
-        localStorage.setItem("adminToken", token);
-        setSuccess("Login successful — redirecting...");
-
-        // Navigate to admin dashboard after a short delay
-        setTimeout(() => {
-          onNavigate?.("admin-dashboard");
-        }, 1000);
-      } else {
+      const credentials = HARDCODED_CREDENTIALS[username];
+      if (!credentials || credentials.password !== password) {
         throw new Error("Invalid username or password");
       }
+
+      // Create token with user info
+      const userData = { username, role: credentials.role };
+      const token = btoa(JSON.stringify(userData));
+
+      // Store token
+      setAuthToken(token);
+      login(userData, token);
+
+      setSuccess("Login successful — redirecting...");
+
+      // Navigate to appropriate dashboard based on role
+      setTimeout(() => {
+        if (credentials.role === "admin") {
+          onNavigate?.("admin-dashboard");
+        } else if (credentials.role === "operator") {
+          onNavigate?.("operator-dashboard");
+        } else {
+          onNavigate?.("home");
+        }
+      }, 1000);
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -47,6 +64,26 @@ export default function AdminLogin({ onNavigate }) {
         style={{ maxWidth: 560, margin: "0 auto" }}
       >
         <h2 className="checkout-section-title">Admin / Operator Login</h2>
+
+        <div
+          style={{
+            background: "#f5f5f5",
+            padding: 12,
+            borderRadius: 4,
+            marginBottom: 24,
+            fontSize: 12,
+          }}
+        >
+          <p style={{ margin: "0 0 8px 0", fontWeight: "bold" }}>
+            Test Credentials:
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            Admin: <code>admin</code> / <code>admin</code>
+          </p>
+          <p style={{ margin: "4px 0" }}>
+            Operator: <code>operator</code> / <code>operator</code>
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
