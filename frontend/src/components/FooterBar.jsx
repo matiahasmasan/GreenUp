@@ -14,12 +14,16 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         icon: "fas fa-shopping-cart",
         badge: cartItemCount,
       },
-      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+      { label: "Language", key: "flag", icon: "fas fa-flag" },
     ],
     operator: [
       { label: "Orders", key: "operator-dashboard", icon: "fas fa-list" },
-      { label: "Home", key: "home", icon: "fas fa-home" },
-      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+      {
+        label: "Order History",
+        key: "history",
+        icon: "fas fa-clock-rotate-left",
+      },
+      { label: "Products", key: "products", icon: "fas fa-burger" },
     ],
     admin: [
       {
@@ -27,13 +31,18 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         key: "admin-dashboard",
         icon: "fas fa-tachometer-alt",
       },
-      { label: "Home", key: "home", icon: "fas fa-home" },
-      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+      {
+        label: "Order History",
+        key: "history",
+        icon: "fas fa-clock-rotate-left",
+      },
+      { label: "Products", key: "products", icon: "fas fa-burger" },
+      { label: "Operators", key: "operators", icon: "fas fa-user" },
     ],
     public: [
       { label: "Home", key: "home", icon: "fas fa-home" },
       { label: "Login", key: "login", icon: "fas fa-sign-in-alt" },
-      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+      { label: "Language", key: "flag", icon: "fas fa-flag" },
     ],
   };
 
