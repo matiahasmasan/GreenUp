@@ -1,51 +1,72 @@
 import React from "react";
+import { useAuth } from "../context/AuthContext";
 
 function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
+  const { user } = useAuth();
+
+  // Define role-specific menu items
+  const menuConfig = {
+    client: [
+      { label: "Home", key: "home", icon: "fas fa-home" },
+      {
+        label: "Cart",
+        key: "cart",
+        icon: "fas fa-shopping-cart",
+        badge: cartItemCount,
+      },
+      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+    ],
+    operator: [
+      { label: "Orders", key: "operator-dashboard", icon: "fas fa-list" },
+      { label: "Home", key: "home", icon: "fas fa-home" },
+      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+    ],
+    admin: [
+      {
+        label: "Dashboard",
+        key: "admin-dashboard",
+        icon: "fas fa-tachometer-alt",
+      },
+      { label: "Home", key: "home", icon: "fas fa-home" },
+      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+    ],
+    public: [
+      { label: "Home", key: "home", icon: "fas fa-home" },
+      { label: "Login", key: "login", icon: "fas fa-sign-in-alt" },
+      { label: "Lang", key: "flag", icon: "fas fa-flag" },
+    ],
+  };
+
+  const items = menuConfig[user?.role] || menuConfig.public;
+
   return (
     <footer
       className="footer-nav"
       role="navigation"
       aria-label="Bottom navigation"
     >
-      <button
-        type="button"
-        className="nav-item"
-        onClick={() => onNavigate("home")}
-        aria-label="Home"
-      >
-        <i className="fas fa-home" aria-hidden="true"></i>
-        <span className="nav-label">Home</span>
-      </button>
-
-      <button
-        type="button"
-        className="nav-item"
-        onClick={() => onNavigate("cart")}
-        aria-label="Cart"
-      >
-        <i className="fas fa-shopping-cart" aria-hidden="true"></i>
-        {cartItemCount > 0 && (
-          <span
-            className="cart-badge"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {cartItemCount}
-          </span>
-        )}
-        <span className="nav-label">Cart</span>
-      </button>
-
-      <button
-        type="button"
-        className="nav-item"
-        onClick={() => onNavigate("flag")}
-        aria-label="Toggle language"
-      >
-        <i className="fas fa-flag" aria-hidden="true"></i>
-        <span className="nav-label">Lang</span>
-      </button>
+      {items.map((item) => (
+        <button
+          key={item.key}
+          type="button"
+          className="nav-item"
+          onClick={() => onNavigate(item.key)}
+          aria-label={item.label}
+        >
+          <i className={item.icon} aria-hidden="true"></i>
+          {item.badge > 0 && (
+            <span
+              className="cart-badge"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {item.badge}
+            </span>
+          )}
+          <span className="nav-label">{item.label}</span>
+        </button>
+      ))}
     </footer>
   );
 }
