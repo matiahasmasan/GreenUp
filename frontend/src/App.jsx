@@ -139,7 +139,7 @@ function AppContent() {
     else if (key === "operator-dashboard") setRoute("operator-dashboard");
     else if (key === "logout") {
       logout();
-      setRoute("home");
+      setRoute("login");
       setCartItems([]);
     } else if (key === "flag") {
       // placeholder for language toggle
