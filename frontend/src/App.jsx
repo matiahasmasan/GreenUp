@@ -12,6 +12,7 @@ import AdminLogin from "./pages/AdminLogin";
 import ClientHome from "./pages/client/Home";
 import OperatorDashboard from "./pages/operator/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
+import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import {
   setAuthToken,
@@ -133,7 +134,7 @@ function AppContent() {
     else if (key === "cart") setRoute("cart");
     else if (key === "checkout") setRoute("checkout");
     else if (key === "confirmed") setRoute("confirmed");
-    else if (key === "admin") setRoute("admin");
+    else if (key === "login") setRoute("login");
     else if (key === "admin-dashboard") setRoute("admin-dashboard");
     else if (key === "operator-dashboard") setRoute("operator-dashboard");
     else if (key === "logout") {
@@ -222,7 +223,7 @@ function AppContent() {
         <ConfirmedOrder lastOrder={lastOrder} onNavigate={handleNavigate} />
       )}
 
-      {route === "admin" && <AdminLogin onNavigate={handleNavigate} />}
+      {route === "login" && <AdminLogin onNavigate={handleNavigate} />}
 
       {route === "admin-dashboard" && (
         <div className="checkout-container" style={{ paddingTop: 24 }}>
@@ -248,6 +249,16 @@ function AppContent() {
       {route === "operator-dashboard" && (
         <OperatorDashboard onNavigate={handleNavigate} />
       )}
+
+      {![
+        "home",
+        "cart",
+        "checkout",
+        "confirmed",
+        "login",
+        "admin-dashboard",
+        "operator-dashboard",
+      ].includes(route) && <NotFound onNavigate={handleNavigate} />}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>

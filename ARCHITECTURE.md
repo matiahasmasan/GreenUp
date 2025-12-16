@@ -72,7 +72,7 @@ frontend/src/
 
 ## Test Credentials
 
-Access the login page at: `http://localhost:5173/#admin`
+Access the login page at: `http://localhost:5173/#login`
 
 **Admin:**
 
@@ -93,7 +93,7 @@ Routes are handled via URL hash:
 | Route                 | Component         | Role     | Purpose                      |
 | --------------------- | ----------------- | -------- | ---------------------------- |
 | `#home`               | ClientHome        | Client   | Browse menu and place orders |
-| `#admin`              | AdminLogin        | Public   | Login page                   |
+| `#login`              | AdminLogin        | Public   | Login page                   |
 | `#admin-dashboard`    | AdminDashboard    | Admin    | System administration        |
 | `#operator-dashboard` | OperatorDashboard | Operator | Order management             |
 | `#cart`               | Cart              | Client   | Shopping cart                |
