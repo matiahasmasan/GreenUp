@@ -24,6 +24,7 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         icon: "fas fa-clock-rotate-left",
       },
       { label: "Products", key: "products", icon: "fas fa-burger" },
+      { label: "Logout", key: "logout", icon: "fas fa-sign-out-alt" },
     ],
     admin: [
       {
@@ -38,6 +39,7 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
       },
       { label: "Products", key: "products", icon: "fas fa-burger" },
       { label: "Operators", key: "operators", icon: "fas fa-user" },
+      { label: "Logout", key: "logout", icon: "fas fa-sign-out-alt" },
     ],
     public: [
       { label: "Home", key: "home", icon: "fas fa-home" },
