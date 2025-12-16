@@ -65,26 +65,6 @@ export default function AdminLogin({ onNavigate }) {
       >
         <h2 className="checkout-section-title">Admin / Operator Login</h2>
 
-        <div
-          style={{
-            background: "#f5f5f5",
-            padding: 12,
-            borderRadius: 4,
-            marginBottom: 24,
-            fontSize: 12,
-          }}
-        >
-          <p style={{ margin: "0 0 8px 0", fontWeight: "bold" }}>
-            Test Credentials:
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            Admin: <code>admin</code> / <code>admin</code>
-          </p>
-          <p style={{ margin: "4px 0" }}>
-            Operator: <code>operator</code> / <code>operator</code>
-          </p>
-        </div>
-
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="username">Username</label>
