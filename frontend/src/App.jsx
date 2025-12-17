@@ -130,36 +130,27 @@ function AppContent() {
       : "";
 
   const handleNavigate = (key) => {
-    let newRoute = route;
+    let routeKey = key;
 
-    if (key === "home" || key === "menu") newRoute = "home";
-    else if (key === "cart") newRoute = "cart";
-    else if (key === "checkout") newRoute = "checkout";
-    else if (key === "confirmed") newRoute = "confirmed";
-    else if (key === "login") newRoute = "login";
-    else if (key === "admin-dashboard") newRoute = "admin-dashboard";
-    else if (key === "operator-dashboard") newRoute = "operator-dashboard";
-    else if (key === "history") newRoute = "history";
-    else if (key === "products") newRoute = "products";
-    else if (key === "operators") newRoute = "operators";
+    if (key === "home" || key === "menu") setRoute("home");
+    else if (key === "cart") setRoute("cart");
+    else if (key === "checkout") setRoute("checkout");
+    else if (key === "confirmed") setRoute("confirmed");
+    else if (key === "login") setRoute("login");
+    else if (key === "admin-dashboard") setRoute("admin-dashboard");
+    else if (key === "operator-dashboard") setRoute("operator-dashboard");
     else if (key === "logout") {
       logout();
-      newRoute = "login";
+      setRoute("login");
+      routeKey = "login"; // Set hash to login, not logout
       setCartItems([]);
     } else if (key === "flag") {
       // placeholder for language toggle
       console.log("Toggle language (not implemented)");
-      return;
-    } else {
-      // Unknown route, stay on current page
-      return;
     }
-
-    setRoute(newRoute);
-
     // keep route in the URL hash so pages can be opened directly
     try {
-      window.location.hash = newRoute;
+      window.location.hash = routeKey;
     } catch (e) {
       // ignore in environments where window isn't available
     }
