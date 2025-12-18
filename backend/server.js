@@ -87,20 +87,10 @@ app.post("/orders", async (req, res) => {
   }
 });
 
-// GET /orders - Retrieve all orders (optional, for kitchen/manager view)
-app.get("/orders", async (_req, res) => {
+// GET /history - Retrieve all orders (optional, for kitchen/manager view)
+app.get("/history", async (_req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT o.id, o.customer_name, o.table_number, o.payment_method, 
-              o.total_amount, o.status, o.created_at, 
-              JSON_ARRAYAGG(
-                JSON_OBJECT('item_name', oi.item_name, 'item_price', oi.item_price, 'quantity', oi.quantity)
-              ) as items
-       FROM orders o
-       LEFT JOIN order_items oi ON o.id = oi.order_id
-       GROUP BY o.id
-       ORDER BY o.created_at DESC`
-    );
+    const [rows] = await pool.query(`SELECT * from orders`);
     res.json(rows);
   } catch (err) {
     console.error("Failed to fetch orders", err);

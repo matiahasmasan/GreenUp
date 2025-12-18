@@ -42,14 +42,9 @@ function AppContent() {
 
   useEffect(() => {
     const handleHashChange = () => {
-      try {
-        const hash = window.location.hash.replace(/^#/, "");
-        setRoute(hash || "home");
-      } catch (e) {
-        // ignore
-      }
+      const hash = window.location.hash.replace(/^#/, "");
+      setRoute(hash || "home");
     };
-
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
@@ -122,13 +117,6 @@ function AppContent() {
     }
   }, [activeCategory, availableCategoryIds]);
 
-  const emptyStateMessage =
-    filteredItems.length === 0
-      ? searchTerm
-        ? "No dishes match your search."
-        : "No menu items available yet."
-      : "";
-
   const handleNavigate = (key) => {
     let routeKey = key;
 
@@ -145,14 +133,13 @@ function AppContent() {
       routeKey = "login"; // Set hash to login, not logout
       setCartItems([]);
     } else if (key === "flag") {
-      // placeholder for language toggle
-      console.log("Toggle language (not implemented)");
+      console.log("Not implemented");
     }
-    // keep route in the URL hash so pages can be opened directly
+
     try {
       window.location.hash = routeKey;
     } catch (e) {
-      // ignore in environments where window isn't available
+      console.error("Failed to set hash:", e);
     }
   };
 
