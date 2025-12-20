@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import "../../App.css";
+import { formatDate } from "../../utils/dateFormatter";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -73,6 +74,9 @@ export default function OperatorDashboard({ onNavigate }) {
                   <th className="px-3 py-3 text-right font-semibold text-gray-700">
                     Total
                   </th>
+                  <th className="px-3 py-3 text-right font-semibold text-gray-700">
+                    Sent
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -113,6 +117,9 @@ export default function OperatorDashboard({ onNavigate }) {
                       <td className="px-3 py-3 text-right text-gray-800">
                         {order.payment_method} $
                         {parseFloat(order.total_amount).toFixed(2)}
+                      </td>
+                      <td className="px-3 py-3 text-right text-gray-800">
+                        {formatDate(order.created_at)}
                       </td>
                     </tr>
                   );
