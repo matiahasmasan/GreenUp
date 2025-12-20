@@ -87,11 +87,44 @@ app.post("/orders", async (req, res) => {
   }
 });
 
-// GET /history - Retrieve all orders (optional, for kitchen/manager view)
+// GET /history - Retrieve all orders with their items
 app.get("/history", async (_req, res) => {
   try {
-    const [rows] = await pool.query(`SELECT * from orders`);
-    res.json(rows);
+    // Fetch all orders
+    const [orders] = await pool.query(
+      `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
+       FROM orders 
+       ORDER BY created_at DESC`
+    );
+
+    // Fetch all order items
+    const [orderItems] = await pool.query(
+      `SELECT order_id, item_name, item_price, quantity, subtotal 
+       FROM order_items 
+       ORDER BY order_id, id`
+    );
+
+    // Group items by order_id
+    const itemsByOrder = orderItems.reduce((acc, item) => {
+      if (!acc[item.order_id]) {
+        acc[item.order_id] = [];
+      }
+      acc[item.order_id].push({
+        name: item.item_name,
+        price: item.item_price,
+        quantity: item.quantity,
+        subtotal: item.subtotal,
+      });
+      return acc;
+    }, {});
+
+    // Combine orders with their items
+    const ordersWithItems = orders.map((order) => ({
+      ...order,
+      items: itemsByOrder[order.id] || [],
+    }));
+
+    res.json(ordersWithItems);
   } catch (err) {
     console.error("Failed to fetch orders", err);
     res.status(500).json({ error: "Failed to fetch orders" });
