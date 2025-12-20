@@ -68,16 +68,10 @@ export default function OperatorDashboard({ onNavigate }) {
                     Items
                   </th>
                   <th className="px-3 py-3 text-center font-semibold text-gray-700">
-                    Table
-                  </th>
-                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
-                    Payment
+                    Status
                   </th>
                   <th className="px-3 py-3 text-right font-semibold text-gray-700">
                     Total
-                  </th>
-                  <th className="px-3 py-3 text-center font-semibold text-gray-700">
-                    Status
                   </th>
                 </tr>
               </thead>
@@ -101,21 +95,13 @@ export default function OperatorDashboard({ onNavigate }) {
                         #{order.id}
                       </td>
                       <td className="px-3 py-3 text-gray-700">
-                        {order.customer_name}
+                        <p>{order.customer_name} </p>
+                        <p className="">Table: {order.table_number}</p>
                       </td>
                       <td className="px-3 py-3 text-gray-700">
                         {order.items
                           .map((item) => `${item.name} (${item.quantity})`)
                           .join(", ")}
-                      </td>
-                      <td className="px-3 py-3 text-center text-gray-700">
-                        {order.table_number}
-                      </td>
-                      <td className="px-3 py-3 text-gray-700 capitalize">
-                        {order.payment_method}
-                      </td>
-                      <td className="px-3 py-3 text-right font-semibold text-gray-800">
-                        ${parseFloat(order.total_amount).toFixed(2)}
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span
@@ -123,6 +109,10 @@ export default function OperatorDashboard({ onNavigate }) {
                         >
                           {order.status}
                         </span>
+                      </td>
+                      <td className="px-3 py-3 text-right text-gray-800">
+                        {order.payment_method} $
+                        {parseFloat(order.total_amount).toFixed(2)}
                       </td>
                     </tr>
                   );
