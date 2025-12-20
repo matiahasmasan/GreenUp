@@ -64,6 +64,9 @@ export default function OperatorDashboard({ onNavigate }) {
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">
                     Customer
                   </th>
+                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
+                    Items
+                  </th>
                   <th className="px-3 py-3 text-center font-semibold text-gray-700">
                     Table
                   </th>
@@ -99,6 +102,11 @@ export default function OperatorDashboard({ onNavigate }) {
                       </td>
                       <td className="px-3 py-3 text-gray-700">
                         {order.customer_name}
+                      </td>
+                      <td className="px-3 py-3 text-gray-700">
+                        {order.items
+                          .map((item) => `${item.name} (${item.quantity})`)
+                          .join(", ")}
                       </td>
                       <td className="px-3 py-3 text-center text-gray-700">
                         {order.table_number}
