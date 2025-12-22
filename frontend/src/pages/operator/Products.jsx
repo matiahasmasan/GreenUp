@@ -18,7 +18,7 @@ export default function OperatorProducts({ onNavigate }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [filterAvailability, setFilterAvailability] = useState(null);
-  const productsPerPage = 10;
+  const productsPerPage = 5;
 
   useEffect(() => {
     fetchProducts();
