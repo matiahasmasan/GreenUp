@@ -10,7 +10,7 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
-export default function OperatorProducts({ onNavigate }) {
+export default function OperatorProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,13 +65,7 @@ export default function OperatorProducts({ onNavigate }) {
 
     // Category filter
     if (filterCategory !== null) {
-      if (filterCategory === "uncategorized") {
-        filtered = filtered.filter((item) => !item.category_id);
-      } else {
-        filtered = filtered.filter(
-          (item) => item.category_id === filterCategory
-        );
-      }
+      filtered = filtered.filter((item) => item.category_id === filterCategory);
     }
 
     // Availability filter
@@ -136,13 +130,7 @@ export default function OperatorProducts({ onNavigate }) {
             value={filterCategory === null ? "" : filterCategory}
             onChange={(e) => {
               const value = e.target.value;
-              if (value === "") {
-                setFilterCategory(null);
-              } else if (value === "uncategorized") {
-                setFilterCategory("uncategorized");
-              } else {
-                setFilterCategory(Number(value));
-              }
+              setFilterCategory(value === "" ? null : Number(value));
               setCurrentPage(1);
             }}
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -153,7 +141,6 @@ export default function OperatorProducts({ onNavigate }) {
                 {cat.label}
               </option>
             ))}
-            <option value="uncategorized">Uncategorized</option>
           </select>
 
           <select
