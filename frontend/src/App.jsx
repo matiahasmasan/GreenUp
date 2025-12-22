@@ -11,6 +11,7 @@ import ConfirmedOrder from "./pages/ConfirmedOrder";
 import AdminLogin from "./pages/AdminLogin";
 import ClientHome from "./pages/client/Home";
 import OperatorDashboard from "./pages/operator/Dashboard";
+import OperatorProducts from "./pages/operator/Products";
 import AdminDashboard from "./pages/admin/Dashboard";
 import NotFound from "./pages/NotFound";
 import { AuthProvider, useAuth } from "./context/AuthContext";
@@ -127,6 +128,7 @@ function AppContent() {
     else if (key === "login") setRoute("login");
     else if (key === "admin-dashboard") setRoute("admin-dashboard");
     else if (key === "operator-dashboard") setRoute("operator-dashboard");
+    else if (key === "products") setRoute("products");
     else if (key === "logout") {
       logout();
       setRoute("login");
@@ -240,6 +242,10 @@ function AppContent() {
         <OperatorDashboard onNavigate={handleNavigate} />
       )}
 
+      {route === "products" && (
+        <OperatorProducts onNavigate={handleNavigate} />
+      )}
+
       {![
         "home",
         "cart",
@@ -248,6 +254,7 @@ function AppContent() {
         "login",
         "admin-dashboard",
         "operator-dashboard",
+        "products",
       ].includes(route) && <NotFound onNavigate={handleNavigate} />}
 
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
