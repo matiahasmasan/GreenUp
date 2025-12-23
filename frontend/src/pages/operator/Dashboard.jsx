@@ -10,6 +10,7 @@ export default function OperatorDashboard({ onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -45,6 +46,35 @@ export default function OperatorDashboard({ onNavigate }) {
   return (
     <div className="checkout-section mt-2">
       <h1 className="checkout-section-title">Operator Dashboard</h1>
+      {/* Filters */}
+      <div className="mt-4 space-y-3">
+        <div>
+          {/* Searchbar */}
+          <input
+            type="text"
+            placeholder="Search order..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-3 flex-wrap">
+          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Set date</option>
+          </select>
+
+          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
+            <option value="">Set category</option>
+            <option value="available">Dessert</option>
+            <option value="unavailable">Drinks</option>
+          </select>
+        </div>
+      </div>
       {loading && <p className="text-gray-500">Loading orders...</p>}
 
       {error && (

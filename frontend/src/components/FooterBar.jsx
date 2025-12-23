@@ -19,11 +19,6 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
     ],
     operator: [
       { label: "Orders", key: "operator-dashboard", icon: "fas fa-list" },
-      {
-        label: "Order History",
-        key: "history",
-        icon: "fas fa-clock-rotate-left",
-      },
       { label: "Products", key: "products", icon: "fas fa-burger" },
       { label: "Logout", key: "logout", icon: "fas fa-sign-out-alt" },
     ],
@@ -33,10 +28,11 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         key: "admin-dashboard",
         icon: "fas fa-tachometer-alt",
       },
+      // DE SCHIMBAT PE VIITOR din operator-dashboard in admin-dashboard
       {
-        label: "Order History",
-        key: "history",
-        icon: "fas fa-clock-rotate-left",
+        label: "Orders",
+        key: "operator-dashboard",
+        icon: "fas fa-list",
       },
       { label: "Products", key: "products", icon: "fas fa-burger" },
       { label: "Operators", key: "operators", icon: "fas fa-user" },
