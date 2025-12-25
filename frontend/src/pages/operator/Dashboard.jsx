@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "../../App.css";
 import { formatDate } from "../../utils/dateFormatter";
 import Pagination from "../../components/common/Pagination";
@@ -37,11 +37,40 @@ export default function OperatorDashboard({ onNavigate }) {
     }
   }
 
+  // SEARCH LOGIC
+  // BY CUSTOMER NAME, TABLE NUMBER, ORDER ID, ITEM NAMES
+  const filteredOrders = useMemo(() => {
+    if (!searchTerm.trim()) {
+      return orders;
+    }
+
+    const needle = searchTerm.trim().toLowerCase();
+    return orders.filter((order) => {
+      const customerName = (order.customer_name || "").toLowerCase();
+      const tableNumber = String(order.table_number || "");
+      const orderId = String(order.id);
+      const items = order.items
+        .map((item) => item.name)
+        .join(" ")
+        .toLowerCase();
+
+      return (
+        customerName.includes(needle) ||
+        tableNumber.includes(needle) ||
+        orderId.includes(needle) ||
+        items.includes(needle)
+      );
+    });
+  }, [orders, searchTerm]);
+
   // PAGIONATION LOGIC
-  const totalPages = Math.ceil(orders.length / ordersPerPage);
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
   const indexOfLastOrder = currentPage * ordersPerPage;
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
-  const currentOrders = orders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const currentOrders = filteredOrders.slice(
+    indexOfFirstOrder,
+    indexOfLastOrder
+  );
 
   return (
     <div className="checkout-section mt-2">
@@ -83,11 +112,11 @@ export default function OperatorDashboard({ onNavigate }) {
         </div>
       )}
 
-      {!loading && orders.length === 0 && (
+      {!loading && filteredOrders.length === 0 && (
         <p className="text-gray-600">No orders yet.</p>
       )}
 
-      {!loading && orders.length > 0 && (
+      {!loading && filteredOrders.length > 0 && (
         <div className="mt-6">
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="w-full border-collapse text-sm bg-white">
@@ -167,9 +196,9 @@ export default function OperatorDashboard({ onNavigate }) {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
-            totalItems={orders.length}
+            totalItems={filteredOrders.length}
             itemsPerPage={ordersPerPage}
-            itemName={orders.length === 1 ? "order" : "orders"}
+            itemName={filteredOrders.length === 1 ? "order" : "orders"}
           />
         </div>
       )}
