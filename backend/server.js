@@ -87,6 +87,59 @@ app.post("/orders", async (req, res) => {
   }
 });
 
+// GET /orders/:id - Retrieve a single order by ID with its items
+app.get("/orders/:id", async (req, res) => {
+  const orderId = parseInt(req.params.id);
+
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: "Invalid order ID" });
+  }
+
+  try {
+    // Fetch the order
+    const [orders] = await pool.query(
+      `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
+       FROM orders 
+       WHERE id = ?`,
+      [orderId]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const order = orders[0];
+
+    // Fetch order items
+    const [orderItems] = await pool.query(
+      `SELECT order_id, item_name, item_price, quantity, subtotal 
+       FROM order_items 
+       WHERE order_id = ?
+       ORDER BY id`,
+      [orderId]
+    );
+
+    // Format items
+    const items = orderItems.map((item) => ({
+      name: item.item_name,
+      price: item.item_price,
+      quantity: item.quantity,
+      subtotal: item.subtotal,
+    }));
+
+    // Combine order with its items
+    const orderWithItems = {
+      ...order,
+      items: items,
+    };
+
+    res.json(orderWithItems);
+  } catch (err) {
+    console.error("Failed to fetch order", err);
+    res.status(500).json({ error: "Failed to fetch order" });
+  }
+});
+
 // GET /history - Retrieve all orders with their items
 app.get("/history", async (_req, res) => {
   try {
