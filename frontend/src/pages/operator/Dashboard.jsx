@@ -166,19 +166,10 @@ export default function OperatorDashboard({ onNavigate }) {
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-200">
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">
-                    ID
-                  </th>
-                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
                     Customer
-                  </th>
-                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
-                    Items
                   </th>
                   <th className="px-3 py-3 text-center font-semibold text-gray-700">
                     Status
-                  </th>
-                  <th className="px-3 py-3 text-right font-semibold text-gray-700">
-                    Sent
                   </th>
                   <th className="px-3 py-3 text-center font-semibold text-gray-700">
                     Actions
@@ -201,17 +192,14 @@ export default function OperatorDashboard({ onNavigate }) {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       }`}
                     >
-                      <td className="px-3 py-3 font-semibold text-gray-800">
-                        #{order.id}
-                      </td>
                       <td className="px-3 py-3 text-gray-700">
-                        <p>{order.customer_name} </p>
-                        <p className="">Table: {order.table_number}</p>
-                      </td>
-                      <td className="px-3 py-3 text-gray-700">
-                        {order.items
-                          .map((item) => `${item.name} (${item.quantity})`)
-                          .join(", ")}
+                        <p>
+                          {order.customer_name}{" "}
+                          <span className="text-gray-500">#{order.id}</span>
+                        </p>
+                        <p className="text-gray-500">
+                          Table: {order.table_number}
+                        </p>
                       </td>
                       <td className="px-3 py-3 text-center">
                         <span
@@ -219,9 +207,6 @@ export default function OperatorDashboard({ onNavigate }) {
                         >
                           {order.status}
                         </span>
-                      </td>
-                      <td className="px-3 py-3 text-right text-gray-800">
-                        {formatDate(order.created_at)}
                       </td>
                       <td className="px-3 py-3">
                         <div className="flex justify-center gap-2">
