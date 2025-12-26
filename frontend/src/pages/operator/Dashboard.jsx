@@ -197,23 +197,26 @@ export default function OperatorDashboard({ onNavigate }) {
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleView(order.id)}
-                            className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+                            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-blue-600 transition"
                             title="View order"
                           >
+                            <i className="fas fa-eye mr-1"></i>
                             View
                           </button>
                           <button
                             onClick={() => handleEdit(order.id)}
-                            className="px-3 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600 transition"
+                            className="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-yellow-600 transition"
                             title="Edit order"
                           >
+                            <i className="fas fa-edit mr-1"></i>
                             Edit
                           </button>
                           <button
                             onClick={() => handleDelete(order.id)}
-                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
+                            className="px-3 py-1 bg-green-700 text-white text-xs rounded hover:bg-red-600 transition"
                             title="Delete order"
                           >
+                            <i className="fas fa-trash mr-1"></i>
                             Delete
                           </button>
                         </div>
