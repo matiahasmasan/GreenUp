@@ -37,6 +37,19 @@ export default function OperatorDashboard({ onNavigate }) {
     }
   }
 
+  // Action handlers
+  const handleView = (orderId) => {
+    console.log("View order:", orderId);
+  };
+
+  const handleEdit = (orderId) => {
+    console.log("Edit order:", orderId);
+  };
+
+  const handleDelete = async (orderId) => {
+    console.log("Delete order:", orderId);
+  };
+
   // SEARCH LOGIC
   // BY CUSTOMER NAME, TABLE NUMBER, ORDER ID, ITEM NAMES
   const filteredOrders = useMemo(() => {
@@ -135,10 +148,10 @@ export default function OperatorDashboard({ onNavigate }) {
                     Status
                   </th>
                   <th className="px-3 py-3 text-right font-semibold text-gray-700">
-                    Total
-                  </th>
-                  <th className="px-3 py-3 text-right font-semibold text-gray-700">
                     Sent
+                  </th>
+                  <th className="px-3 py-3 text-center font-semibold text-gray-700">
+                    Actions
                   </th>
                 </tr>
               </thead>
@@ -178,11 +191,32 @@ export default function OperatorDashboard({ onNavigate }) {
                         </span>
                       </td>
                       <td className="px-3 py-3 text-right text-gray-800">
-                        {order.payment_method} $
-                        {parseFloat(order.total_amount).toFixed(2)}
-                      </td>
-                      <td className="px-3 py-3 text-right text-gray-800">
                         {formatDate(order.created_at)}
+                      </td>
+                      <td className="px-3 py-3">
+                        <div className="flex justify-center gap-2">
+                          <button
+                            onClick={() => handleView(order.id)}
+                            className="px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition"
+                            title="View order"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleEdit(order.id)}
+                            className="px-3 py-1 bg-yellow-500 text-white text-xs rounded hover:bg-yellow-600 transition"
+                            title="Edit order"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(order.id)}
+                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition"
+                            title="Delete order"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
