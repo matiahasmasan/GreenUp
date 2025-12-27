@@ -37,7 +37,12 @@ export default function OperatorDashboard({ onNavigate }) {
       }
 
       const data = await res.json();
-      setOrders(data);
+      // Default status
+      const normalizedData = data.map((order) => ({
+        ...order,
+        status: order.status || "pending",
+      }));
+      setOrders(normalizedData);
       setError("");
     } catch (err) {
       setError(err.message || "Failed to load orders");
@@ -62,6 +67,10 @@ export default function OperatorDashboard({ onNavigate }) {
       }
 
       const data = await res.json();
+      // Default status
+      if (!data.status) {
+        data.status = "pending";
+      }
       setSelectedOrder(data);
       setViewModalOpen(true);
     } catch (err) {
@@ -266,14 +275,17 @@ export default function OperatorDashboard({ onNavigate }) {
               </thead>
               <tbody>
                 {currentOrders.map((order, index) => {
+                  const statusValue = order.status
+                    ? order.status.toLowerCase().trim()
+                    : "";
                   const statusStyles =
-                    order.status === "pending"
+                    statusValue === "pending"
                       ? "bg-green-50 text-green-700"
-                      : order.status === "completed"
+                      : statusValue === "completed"
                       ? "bg-green-50 text-green-600"
-                      : order.status === "progress"
+                      : statusValue === "preparing"
                       ? "bg-yellow-50 text-yellow-700"
-                      : order.status === "cancelled"
+                      : statusValue === "cancelled"
                       ? "bg-red-50 text-red-600"
                       : "bg-gray-50 text-gray-600";
 
@@ -386,18 +398,20 @@ export default function OperatorDashboard({ onNavigate }) {
               </p>
               <span
                 className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${
-                  selectedOrder.status === "pending"
+                  !selectedOrder.status
+                    ? "bg-gray-50 text-gray-600"
+                    : selectedOrder.status.toLowerCase() === "pending"
                     ? "bg-green-50 text-green-700"
-                    : selectedOrder.status === "completed"
+                    : selectedOrder.status.toLowerCase() === "completed"
                     ? "bg-green-50 text-green-600"
-                    : selectedOrder.status === "progress"
+                    : selectedOrder.status.toLowerCase() === "preparing"
                     ? "bg-yellow-50 text-yellow-700"
-                    : selectedOrder.status === "cancelled"
+                    : selectedOrder.status.toLowerCase() === "cancelled"
                     ? "bg-red-50 text-red-600"
                     : "bg-gray-50 text-gray-600"
                 }`}
               >
-                {selectedOrder.status || "Unknown"}
+                {selectedOrder.status ? selectedOrder.status : "Not Set"}
               </span>
             </div>
 
@@ -416,7 +430,7 @@ export default function OperatorDashboard({ onNavigate }) {
                 disabled={updateLoading}
               >
                 <option value="pending">Pending</option>
-                <option value="progress">In Progress</option>
+                <option value="preparing">Preparing</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
@@ -479,18 +493,20 @@ export default function OperatorDashboard({ onNavigate }) {
                 </p>
                 <span
                   className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${
-                    selectedOrder.status === "pending"
+                    !selectedOrder.status || selectedOrder.status === null
+                      ? "bg-gray-50 text-gray-600"
+                      : selectedOrder.status.toLowerCase() === "pending"
                       ? "bg-green-50 text-green-700"
-                      : selectedOrder.status === "completed"
+                      : selectedOrder.status.toLowerCase() === "completed"
                       ? "bg-green-50 text-green-600"
-                      : selectedOrder.status === "progress"
+                      : selectedOrder.status.toLowerCase() === "preparing"
                       ? "bg-yellow-50 text-yellow-700"
-                      : selectedOrder.status === "cancelled"
+                      : selectedOrder.status.toLowerCase() === "cancelled"
                       ? "bg-red-50 text-red-600"
                       : "bg-gray-50 text-gray-600"
                   }`}
                 >
-                  {selectedOrder.status || "Unknown"}
+                  {selectedOrder.status ? selectedOrder.status : "Not Set"}
                 </span>
               </div>
               <div>
