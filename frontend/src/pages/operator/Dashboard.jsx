@@ -362,17 +362,14 @@ export default function OperatorDashboard({ onNavigate }) {
                       <table className="w-full">
                         <thead className="bg-gray-100">
                           <tr>
-                            <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                            <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700">
                               Item
                             </th>
-                            <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                            <th className="px-3 py-3 text-center text-sm font-semibold text-gray-700">
                               Quantity
                             </th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
+                            <th className="px-3 py-3 text-right text-sm font-semibold text-gray-700">
                               Price
-                            </th>
-                            <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">
-                              Subtotal
                             </th>
                           </tr>
                         </thead>
@@ -384,17 +381,32 @@ export default function OperatorDashboard({ onNavigate }) {
                                 index % 2 === 0 ? "bg-white" : "bg-gray-50"
                               }`}
                             >
-                              <td className="px-4 py-3 text-gray-800">
+                              <td className="px-3 py-3 text-gray-800">
                                 {item.name}
                               </td>
-                              <td className="px-4 py-3 text-center text-gray-700">
+                              <td className="px-3 py-3 text-center text-gray-700">
                                 {item.quantity}
                               </td>
-                              <td className="px-4 py-3 text-right text-gray-700">
-                                ${parseFloat(item.price).toFixed(2)}
-                              </td>
-                              <td className="px-4 py-3 text-right font-semibold text-gray-800">
-                                ${parseFloat(item.subtotal).toFixed(2)}
+                              <td className="px-4 py-3 text-right">
+                                <div className="flex flex-col items-end gap-1">
+                                  <div className="text-sm text-gray-600">
+                                    <span className="font-medium text-gray-700">
+                                      ${parseFloat(item.price).toFixed(2)}
+                                    </span>
+                                    <span className="mx-2 text-gray-400">
+                                      ×
+                                    </span>
+                                    <span className="font-medium text-gray-700">
+                                      {item.quantity}
+                                    </span>
+                                  </div>
+                                  <div className="text-base font-semibold text-gray-900">
+                                    $
+                                    {(
+                                      parseFloat(item.price) * item.quantity
+                                    ).toFixed(2)}
+                                  </div>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -402,7 +414,7 @@ export default function OperatorDashboard({ onNavigate }) {
                         <tfoot className="bg-gray-100">
                           <tr>
                             <td
-                              colSpan="3"
+                              colSpan="2"
                               className="px-4 py-3 text-right font-bold text-gray-800"
                             >
                               Total:
