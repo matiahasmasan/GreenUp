@@ -3,6 +3,7 @@ import "../../App.css";
 import { formatDate } from "../../utils/dateFormatter";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/SearchBar";
+import Modal from "../../components/common/Modal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -13,9 +14,13 @@ export default function OperatorDashboard({ onNavigate }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState("");
   const ordersPerPage = 10;
 
   useEffect(() => {
@@ -73,8 +78,91 @@ export default function OperatorDashboard({ onNavigate }) {
     setOrderError("");
   };
 
-  const handleEdit = (orderId) => {
-    console.log("Edit order:", orderId);
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedOrder(null);
+    setSelectedStatus("");
+    setUpdateError("");
+  };
+
+  const handleEdit = async (orderId) => {
+    try {
+      setOrderLoading(true);
+      setUpdateError("");
+      const res = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Order not found");
+        }
+        throw new Error("Failed to fetch order details");
+      }
+
+      const data = await res.json();
+      setSelectedOrder(data);
+      setSelectedStatus(data.status);
+      setEditModalOpen(true);
+    } catch (err) {
+      setUpdateError(err.message || "Failed to load order details");
+      console.error("Error:", err);
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedOrder || !selectedStatus) {
+      setUpdateError("Please select a status");
+      return;
+    }
+
+    if (selectedStatus === selectedOrder.status) {
+      setUpdateError("Status is already set to this value");
+      return;
+    }
+
+    try {
+      setUpdateLoading(true);
+      setUpdateError("");
+      const res = await fetch(
+        `${API_BASE_URL}/orders/${selectedOrder.id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: selectedStatus }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update order status");
+      }
+
+      // Update the order in the local state
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.id === selectedOrder.id
+            ? { ...order, status: selectedStatus }
+            : order
+        )
+      );
+
+      // Update selected order
+      setSelectedOrder({ ...selectedOrder, status: selectedStatus });
+
+      // Close modal after successful update
+      handleCloseEditModal();
+
+      // Optionally refresh orders list
+      // fetchOrders();
+    } catch (err) {
+      setUpdateError(err.message || "Failed to update order status");
+      console.error("Error:", err);
+    } finally {
+      setUpdateLoading(false);
+    }
   };
 
   const handleDelete = async (orderId) => {
@@ -183,7 +271,11 @@ export default function OperatorDashboard({ onNavigate }) {
                       ? "bg-green-50 text-green-700"
                       : order.status === "completed"
                       ? "bg-green-50 text-green-600"
-                      : "bg-red-50 text-red-600";
+                      : order.status === "progress"
+                      ? "bg-yellow-50 text-yellow-700"
+                      : order.status === "cancelled"
+                      ? "bg-red-50 text-red-600"
+                      : "bg-gray-50 text-gray-600";
 
                   return (
                     <tr
@@ -255,197 +347,243 @@ export default function OperatorDashboard({ onNavigate }) {
         </div>
       )}
 
-      {/* View Order Modal */}
-      {viewModalOpen && (
-        <div
-          className="fixed inset-0 bg-opacity-50 backdrop-blur-xs flex items-center justify-center z-50 p-4"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-green-500 text-white px-6 py-4 rounded-t-lg flex justify-between items-center">
-              <h2 className="text-xl font-bold">Order #{selectedOrder?.id}</h2>
-              <button
-                onClick={handleCloseModal}
-                className="text-white hover:text-gray-200 transition text-2xl font-bold"
-                title="Close"
+      {/* Edit Order Modal */}
+      <Modal
+        isOpen={editModalOpen}
+        onClose={handleCloseEditModal}
+        title={`Edit Order #${selectedOrder?.id}`}
+        variant="edit"
+        loading={orderLoading}
+        error={updateError}
+        footerButtons={
+          <>
+            <button
+              onClick={handleCloseEditModal}
+              disabled={updateLoading}
+              className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleUpdateStatus}
+              disabled={
+                updateLoading ||
+                !selectedStatus ||
+                selectedStatus === selectedOrder?.status
+              }
+              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {updateLoading ? "Saving..." : "Save Changes"}
+            </button>
+          </>
+        }
+      >
+        {selectedOrder && (
+          <div className="space-y-6">
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-2">
+                Current Status
+              </p>
+              <span
+                className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${
+                  selectedOrder.status === "pending"
+                    ? "bg-green-50 text-green-700"
+                    : selectedOrder.status === "completed"
+                    ? "bg-green-50 text-green-600"
+                    : selectedOrder.status === "progress"
+                    ? "bg-yellow-50 text-yellow-700"
+                    : selectedOrder.status === "cancelled"
+                    ? "bg-red-50 text-red-600"
+                    : "bg-gray-50 text-gray-600"
+                }`}
               >
-                &times;
-              </button>
+                {selectedOrder.status || "Unknown"}
+              </span>
             </div>
 
-            {/* Modal Content */}
-            <div className="p-6">
-              {orderLoading && (
-                <p className="text-gray-500 text-center py-4">
-                  Loading order details...
-                </p>
-              )}
-
-              {orderError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                  {orderError}
-                </div>
-              )}
-
-              {selectedOrder && !orderLoading && (
-                <div className="space-y-6">
-                  {/* Order Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Customer Name
-                      </p>
-                      <p className="text-gray-800">
-                        {selectedOrder.customer_name}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Table Number
-                      </p>
-                      <p className="text-gray-800">
-                        {selectedOrder.table_number}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Payment Method
-                      </p>
-                      <p className="text-gray-800 capitalize">
-                        {selectedOrder.payment_method}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Status
-                      </p>
-                      <span
-                        className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${
-                          selectedOrder.status === "pending"
-                            ? "bg-green-50 text-green-700"
-                            : selectedOrder.status === "completed"
-                            ? "bg-green-50 text-green-600"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        {selectedOrder.status}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Created At
-                      </p>
-                      <p className="text-gray-800">
-                        {formatDate(selectedOrder.created_at)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-600 mb-1">
-                        Total Amount
-                      </p>
-                      <p className="text-lg font-bold text-green-600">
-                        ${parseFloat(selectedOrder.total_amount).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Order Items */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                      Order Items
-                    </h3>
-                    <div className="border border-gray-200 rounded-lg overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700">
-                              Item
-                            </th>
-                            <th className="px-3 py-3 text-center text-sm font-semibold text-gray-700">
-                              Quantity
-                            </th>
-                            <th className="px-3 py-3 text-right text-sm font-semibold text-gray-700">
-                              Price
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedOrder.items.map((item, index) => (
-                            <tr
-                              key={index}
-                              className={`border-b border-gray-200 ${
-                                index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                              }`}
-                            >
-                              <td className="px-3 py-3 text-gray-800">
-                                {item.name}
-                              </td>
-                              <td className="px-3 py-3 text-center text-gray-700">
-                                {item.quantity}
-                              </td>
-                              <td className="px-4 py-3 text-right">
-                                <div className="flex flex-col items-end gap-1">
-                                  <div className="text-sm text-gray-600">
-                                    <span className="font-medium text-gray-700">
-                                      ${parseFloat(item.price).toFixed(2)}
-                                    </span>
-                                    <span className="mx-2 text-gray-400">
-                                      ×
-                                    </span>
-                                    <span className="font-medium text-gray-700">
-                                      {item.quantity}
-                                    </span>
-                                  </div>
-                                  <div className="text-base font-semibold text-gray-900">
-                                    $
-                                    {(
-                                      parseFloat(item.price) * item.quantity
-                                    ).toFixed(2)}
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                        <tfoot className="bg-gray-100">
-                          <tr>
-                            <td
-                              colSpan="2"
-                              className="px-4 py-3 text-right font-bold text-gray-800"
-                            >
-                              Total:
-                            </td>
-                            <td className="px-4 py-3 text-right font-bold text-green-600 text-lg">
-                              $
-                              {parseFloat(selectedOrder.total_amount).toFixed(
-                                2
-                              )}
-                            </td>
-                          </tr>
-                        </tfoot>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div>
+              <label
+                htmlFor="status-select"
+                className="block text-sm font-semibold text-gray-600 mb-2"
+              >
+                Change Status To
+              </label>
+              <select
+                id="status-select"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                disabled={updateLoading}
+              >
+                <option value="pending">Pending</option>
+                <option value="progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
             </div>
 
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end">
-              <button
-                onClick={handleCloseModal}
-                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
-              >
-                Close
-              </button>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <p className="text-sm text-gray-600 mb-2">
+                <strong>Order Details:</strong>
+              </p>
+              <p className="text-sm text-gray-700">
+                Customer: {selectedOrder.customer_name}
+              </p>
+              <p className="text-sm text-gray-700">
+                Table: {selectedOrder.table_number}
+              </p>
+              <p className="text-sm text-gray-700">
+                Total: ${parseFloat(selectedOrder.total_amount).toFixed(2)}
+              </p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
+
+      {/* View Order Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={handleCloseModal}
+        title={`Order #${selectedOrder?.id}`}
+        variant="view"
+        loading={orderLoading}
+        error={orderError}
+      >
+        {selectedOrder && (
+          <div className="space-y-6">
+            {/* Order Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Customer Name
+                </p>
+                <p className="text-gray-800">{selectedOrder.customer_name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Table Number
+                </p>
+                <p className="text-gray-800">{selectedOrder.table_number}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Payment Method
+                </p>
+                <p className="text-gray-800 capitalize">
+                  {selectedOrder.payment_method}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Status
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${
+                    selectedOrder.status === "pending"
+                      ? "bg-green-50 text-green-700"
+                      : selectedOrder.status === "completed"
+                      ? "bg-green-50 text-green-600"
+                      : selectedOrder.status === "progress"
+                      ? "bg-yellow-50 text-yellow-700"
+                      : selectedOrder.status === "cancelled"
+                      ? "bg-red-50 text-red-600"
+                      : "bg-gray-50 text-gray-600"
+                  }`}
+                >
+                  {selectedOrder.status || "Unknown"}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Created At
+                </p>
+                <p className="text-gray-800">
+                  {formatDate(selectedOrder.created_at)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Total Amount
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  ${parseFloat(selectedOrder.total_amount).toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            {/* Order Items */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                Order Items
+              </h3>
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-3 py-3 text-left text-sm font-semibold text-gray-700">
+                        Item
+                      </th>
+                      <th className="px-3 py-3 text-center text-sm font-semibold text-gray-700">
+                        Quantity
+                      </th>
+                      <th className="px-3 py-3 text-right text-sm font-semibold text-gray-700">
+                        Price
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.items.map((item, index) => (
+                      <tr
+                        key={index}
+                        className={`border-b border-gray-200 ${
+                          index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                        }`}
+                      >
+                        <td className="px-3 py-3 text-gray-800">{item.name}</td>
+                        <td className="px-3 py-3 text-center text-gray-700">
+                          {item.quantity}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex flex-col items-end gap-1">
+                            <div className="text-sm text-gray-600">
+                              <span className="font-medium text-gray-700">
+                                ${parseFloat(item.price).toFixed(2)}
+                              </span>
+                              <span className="mx-2 text-gray-400">×</span>
+                              <span className="font-medium text-gray-700">
+                                {item.quantity}
+                              </span>
+                            </div>
+                            <div className="text-base font-semibold text-gray-900">
+                              $
+                              {(parseFloat(item.price) * item.quantity).toFixed(
+                                2
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-gray-100">
+                    <tr>
+                      <td
+                        colSpan="2"
+                        className="px-4 py-3 text-right font-bold text-gray-800"
+                      >
+                        Total:
+                      </td>
+                      <td className="px-4 py-3 text-right font-bold text-green-600 text-lg">
+                        ${parseFloat(selectedOrder.total_amount).toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
