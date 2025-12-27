@@ -14,55 +14,6 @@ function Modal({
 }) {
   if (!isOpen) return null;
 
-  // Default footer buttons based on variant
-  const getDefaultFooterButtons = () => {
-    switch (variant) {
-      case "delete":
-        return (
-          <>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition font-semibold"
-            >
-              Delete
-            </button>
-          </>
-        );
-      case "edit":
-        return (
-          <>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
-            >
-              Save
-            </button>
-          </>
-        );
-      default: // "view"
-        return (
-          <button
-            onClick={onClose}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
-          >
-            Close
-          </button>
-        );
-    }
-  };
-
   const handleBackdropClick = (e) => {
     if (closeOnBackdropClick && e.target === e.currentTarget) {
       onClose();
@@ -84,7 +35,7 @@ function Modal({
 
   return (
     <div
-      className="fixed inset-0 bg-white bg-opacity-20 backdrop-blur-md flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 backdrop-blur-xs flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
     >
       <div
@@ -110,9 +61,7 @@ function Modal({
         {/* Modal Content */}
         <div className="p-6">
           {loading && (
-            <p className="text-gray-500 text-center py-4">
-              Loading...
-            </p>
+            <p className="text-gray-500 text-center py-4">Loading...</p>
           )}
 
           {error && (
@@ -127,9 +76,7 @@ function Modal({
         {/* Modal Footer */}
         {footerButtons !== null && (
           <div className="sticky bottom-0 bg-gray-50 px-6 py-4 rounded-b-lg flex justify-end gap-3">
-            {footerButtons !== undefined
-              ? footerButtons
-              : getDefaultFooterButtons()}
+            {footerButtons}
           </div>
         )}
       </div>
@@ -138,4 +85,3 @@ function Modal({
 }
 
 export default Modal;
-

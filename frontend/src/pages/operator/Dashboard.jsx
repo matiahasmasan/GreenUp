@@ -462,6 +462,14 @@ export default function OperatorDashboard({ onNavigate }) {
         variant="view"
         loading={orderLoading}
         error={orderError}
+        footerButtons={
+          <button
+            onClick={handleCloseModal}
+            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
+          >
+            Close
+          </button>
+        }
       >
         {selectedOrder && (
           <div className="space-y-6">
