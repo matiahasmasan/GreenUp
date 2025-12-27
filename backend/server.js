@@ -140,6 +140,45 @@ app.get("/orders/:id", async (req, res) => {
   }
 });
 
+// PATCH /orders/:id/status - Update order status
+app.patch("/orders/:id/status", async (req, res) => {
+  const orderId = parseInt(req.params.id);
+  const { status } = req.body;
+
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: "Invalid order ID" });
+  }
+
+  // Validate status
+  const validStatuses = ["pending", "progress", "completed", "cancelled"];
+  if (!status || !validStatuses.includes(status)) {
+    return res.status(400).json({
+      error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
+    });
+  }
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?",
+      [status, orderId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Order status updated successfully",
+      orderId,
+      status,
+    });
+  } catch (err) {
+    console.error("Failed to update order status", err);
+    res.status(500).json({ error: "Failed to update order status" });
+  }
+});
+
 // GET /history - Retrieve all orders with their items
 app.get("/history", async (_req, res) => {
   try {
