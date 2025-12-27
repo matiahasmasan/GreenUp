@@ -54,10 +54,10 @@ app.post("/orders", async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Insert order
+    // Insert order with default status 'pending'
     const [orderResult] = await conn.query(
-      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount) VALUES (?, ?, ?, ?)",
-      [customerName, table, paymentMethod, total || 0]
+      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status) VALUES (?, ?, ?, ?, ?)",
+      [customerName, table, paymentMethod, total || 0, "pending"]
     );
 
     const orderId = orderResult.insertId;
@@ -150,7 +150,7 @@ app.patch("/orders/:id/status", async (req, res) => {
   }
 
   // Validate status
-  const validStatuses = ["pending", "progress", "completed", "cancelled"];
+  const validStatuses = ["pending", "preparing", "completed", "cancelled"];
   if (!status || !validStatuses.includes(status)) {
     return res.status(400).json({
       error: `Invalid status. Must be one of: ${validStatuses.join(", ")}`,
