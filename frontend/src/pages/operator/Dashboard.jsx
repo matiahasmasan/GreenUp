@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import "../../App.css";
 import { formatDate } from "../../utils/dateFormatter";
 import Pagination from "../../components/common/Pagination";
+import SearchBar from "../../components/SearchBar";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -122,15 +123,14 @@ export default function OperatorDashboard({ onNavigate }) {
       <div className="mt-4 space-y-3">
         <div>
           {/* Searchbar */}
-          <input
-            type="text"
+          <SearchBar
+            variant="simple"
             placeholder="Search order..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
+            onChange={(value) => {
+              setSearchTerm(value);
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 

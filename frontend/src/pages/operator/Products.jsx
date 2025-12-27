@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
+import SearchBar from "../../components/SearchBar";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -113,15 +114,14 @@ export default function OperatorProducts() {
       {/* Filters */}
       <div className="mt-4 space-y-3">
         <div>
-          <input
-            type="text"
+          <SearchBar
+            variant="simple"
             placeholder="Search products..."
             value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
+            onChange={(value) => {
+              setSearchTerm(value);
               setCurrentPage(1);
             }}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
 
