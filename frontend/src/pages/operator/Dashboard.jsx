@@ -174,10 +174,6 @@ export default function OperatorDashboard({ onNavigate }) {
     }
   };
 
-  const handleDelete = async (orderId) => {
-    console.log("Delete order:", orderId);
-  };
-
   // SEARCH LOGIC
   // BY CUSTOMER NAME, TABLE NUMBER, ORDER ID, ITEM NAMES
   const filteredOrders = useMemo(() => {
@@ -329,14 +325,6 @@ export default function OperatorDashboard({ onNavigate }) {
                             title="Edit order"
                           >
                             <i className="fas fa-edit "></i>
-                          </button>
-                          {/* DELETE BUTTON */}
-                          <button
-                            onClick={() => handleDelete(order.id)}
-                            className="px-3 py-1 bg-green-700 text-white text-xs rounded hover:bg-red-600 transition"
-                            title="Delete order"
-                          >
-                            <i className="fas fa-trash "></i>
                           </button>
                         </div>
                       </td>
