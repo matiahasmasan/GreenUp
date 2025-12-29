@@ -7,12 +7,14 @@ import Modal from "../../components/common/Modal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-export default function OperatorDashboard({ onNavigate }) {
+export default function OperatorDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -163,9 +165,6 @@ export default function OperatorDashboard({ onNavigate }) {
 
       // Close modal after successful update
       handleCloseEditModal();
-
-      // Optionally refresh orders list
-      // fetchOrders();
     } catch (err) {
       setUpdateError(err.message || "Failed to update order status");
       console.error("Error:", err);
@@ -174,19 +173,34 @@ export default function OperatorDashboard({ onNavigate }) {
     }
   };
 
-  // SEARCH LOGIC
-  // BY CUSTOMER NAME, TABLE NUMBER, ORDER ID, ITEM NAMES
+  // FILTERING LOGIC AND SEARCH LOGIC
+  // BY CUSTOMER NAME, TABLE NUMBER, ORDER ID, ITEM NAMES, DATE RANGE
   const filteredOrders = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return orders;
-    }
-
-    const needle = searchTerm.trim().toLowerCase();
     return orders.filter((order) => {
+      // DATE RANGE FILTER (inclusive)
+      const orderDate = order.created_at
+        ? String(order.created_at).slice(0, 10)
+        : "";
+
+      if (fromDate && orderDate && orderDate < fromDate) {
+        return false;
+      }
+
+      if (toDate && orderDate && orderDate > toDate) {
+        return false;
+      }
+
+      // If there's no search term, date filters above are enough
+      if (!searchTerm.trim()) {
+        return true;
+      }
+
+      // SEARCH FILTER
+      const needle = searchTerm.trim().toLowerCase();
       const customerName = (order.customer_name || "").toLowerCase();
       const tableNumber = String(order.table_number || "");
       const orderId = String(order.id);
-      const items = order.items
+      const items = (order.items || [])
         .map((item) => item.name)
         .join(" ")
         .toLowerCase();
@@ -198,7 +212,7 @@ export default function OperatorDashboard({ onNavigate }) {
         items.includes(needle)
       );
     });
-  }, [orders, searchTerm]);
+  }, [orders, searchTerm, fromDate, toDate]);
 
   // PAGIONATION LOGIC
   const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
@@ -228,16 +242,34 @@ export default function OperatorDashboard({ onNavigate }) {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-3 flex-wrap">
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <option value="">Set date</option>
-          </select>
-
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500">
-            <option value="">Set category</option>
-            <option value="available">Dessert</option>
-            <option value="unavailable">Drinks</option>
-          </select>
+        <div className="flex gap-3 flex-wrap items-center">
+          {/* Date range filter */}
+          <div className="flex gap-2 flex-wrap items-center">
+            <div className="flex flex-col">
+              <label className="text-xs text-gray-600 mb-1">From date</label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => {
+                  setFromDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-xs text-gray-600 mb-1">To date</label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => {
+                  setToDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+              />
+            </div>
+          </div>
         </div>
       </div>
       {loading && <p className="text-gray-500">Loading orders...</p>}
