@@ -435,7 +435,6 @@ export default function OperatorDashboard() {
                   const isRecentlyCreated = () => {
                     if (!order.created_at) return false;
                     const orderTime = new Date(order.created_at).getTime();
-                    console.log(order.created_at);
                     const currentTime = new Date().getTime();
                     return currentTime - orderTime < 60000; // 60 seconds
                   };

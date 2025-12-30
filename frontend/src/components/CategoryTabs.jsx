@@ -1,3 +1,4 @@
+/* categories */
 export const CATEGORY_OPTIONS = [
   { id: 1, label: "Drinks" },
   { id: 2, label: "Appetizers" },
@@ -12,7 +13,11 @@ function CategoryTabs({ activeCategory, onSelect, availableCategoryIds = [] }) {
 
   return (
     <div className="category-tabs-wrapper">
-      <div className="category-tabs" role="tablist" aria-label="Menu categories">
+      <div
+        className="category-tabs"
+        role="tablist"
+        aria-label="Menu categories"
+      >
         {categories.map((category) => (
           <button
             key={category.id}
@@ -32,4 +37,3 @@ function CategoryTabs({ activeCategory, onSelect, availableCategoryIds = [] }) {
 }
 
 export default CategoryTabs;
-

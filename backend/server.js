@@ -32,6 +32,33 @@ app.get("/menu-items", async (_req, res) => {
   }
 });
 
+// PATCH /menu-items/availability - Update product availability
+app.patch("/menu-items/availability", async (req, res) => {
+  const { name, is_available } = req.body;
+
+  if (name === undefined || is_available === undefined) {
+    return res
+      .status(400)
+      .json({ error: "Missing name or is_available status" });
+  }
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE menu_items SET is_available = ? WHERE name = ?",
+      [is_available ? 1 : 0, name]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ success: true, message: "Availability updated" });
+  } catch (err) {
+    console.error("Failed to update availability", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 // POST /orders - Create a new order
 app.post("/orders", async (req, res) => {
   const { customerName, table, paymentMethod, items, total } = req.body;
