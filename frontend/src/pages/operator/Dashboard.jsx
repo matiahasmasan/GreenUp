@@ -319,7 +319,7 @@ export default function OperatorDashboard() {
         <div className="flex items-center gap-3">
           {/* New Orders Notification */}
           {/* Sliding Notification */}
-          {newOrdersCount == 0 && (
+          {newOrdersCount > 0 && (
             <div
               className="fixed top-4 right-0 z-50"
               style={{
@@ -431,6 +431,17 @@ export default function OperatorDashboard() {
                   const statusValue = order.status
                     ? order.status.toLowerCase().trim()
                     : "";
+
+                  const isRecentlyCreated = () => {
+                    if (!order.created_at) return false;
+                    const orderTime = new Date(order.created_at).getTime();
+                    console.log(order.created_at);
+                    const currentTime = new Date().getTime();
+                    return currentTime - orderTime < 60000; // 60 seconds
+                  };
+
+                  const isNew = isRecentlyCreated();
+
                   const statusStyles =
                     statusValue === "pending"
                       ? "bg-green-50 text-green-700"
@@ -445,8 +456,12 @@ export default function OperatorDashboard() {
                   return (
                     <tr
                       key={order.id}
-                      className={`border-b border-gray-200 ${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      className={`border-b border-gray-200 transition-colors duration-500 ${
+                        isNew
+                          ? "bg-green-100 ring-1 ring-inset ring-green-200" // new order
+                          : index % 2 === 0
+                          ? "bg-gray-50"
+                          : "bg-white" // alternating colors
                       }`}
                     >
                       <td className="px-3 py-3 text-gray-700">
