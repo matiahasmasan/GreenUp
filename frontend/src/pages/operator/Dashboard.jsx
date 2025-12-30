@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import "../../App.css";
 import { formatDate } from "../../utils/dateFormatter";
 import Pagination from "../../components/common/Pagination";
@@ -6,6 +6,7 @@ import SearchBar from "../../components/SearchBar";
 import Modal from "../../components/common/Modal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const POLLING_INTERVAL = 5000; // 5 seconds
 
 export default function OperatorDashboard() {
   const [orders, setOrders] = useState([]);
@@ -23,15 +24,76 @@ export default function OperatorDashboard() {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [newOrdersCount, setNewOrdersCount] = useState(0);
   const ordersPerPage = 10;
+  const pollingIntervalRef = useRef(null);
+  const previousOrdersCountRef = useRef(0);
+  const viewModalOpenRef = useRef(false);
+  const editModalOpenRef = useRef(false);
+
+  // Update refs when modal states change
+  useEffect(() => {
+    viewModalOpenRef.current = viewModalOpen;
+  }, [viewModalOpen]);
+
+  useEffect(() => {
+    editModalOpenRef.current = editModalOpen;
+  }, [editModalOpen]);
 
   useEffect(() => {
     fetchOrders();
+
+    const startPolling = () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+
+      pollingIntervalRef.current = setInterval(() => {
+        // no modals
+        if (!document.hidden) {
+          const modalsOpen =
+            viewModalOpenRef.current || editModalOpenRef.current;
+          if (!modalsOpen) {
+            fetchOrders(true); // silent refresh
+          }
+        }
+      }, POLLING_INTERVAL);
+    };
+
+    startPolling();
+
+    // Handle page visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current);
+        }
+      } else {
+        startPolling();
+        fetchOrders(true);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
-  async function fetchOrders() {
+  async function fetchOrders(silent = false) {
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      } else {
+        setIsRefreshing(true);
+      }
+
       const res = await fetch(`${API_BASE_URL}/history`);
 
       if (!res.ok) {
@@ -44,15 +106,39 @@ export default function OperatorDashboard() {
         ...order,
         status: order.status || "pending",
       }));
+
+      // new orders
+      if (silent && previousOrdersCountRef.current > 0) {
+        const newCount = normalizedData.length - previousOrdersCountRef.current;
+        if (newCount > 0) {
+          setNewOrdersCount((prev) => prev + newCount);
+          setTimeout(() => {
+            setNewOrdersCount(0);
+          }, 5000); // 5 seconds
+        }
+      }
+
+      previousOrdersCountRef.current = normalizedData.length;
       setOrders(normalizedData);
       setError("");
     } catch (err) {
-      setError(err.message || "Failed to load orders");
+      if (!silent) {
+        setError(err.message || "Failed to load orders");
+      }
       console.error("Error:", err);
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      } else {
+        setIsRefreshing(false);
+      }
     }
   }
+
+  const handleManualRefresh = () => {
+    fetchOrders();
+    setNewOrdersCount(0);
+  };
 
   // Action handlers
   const handleView = async (orderId) => {
@@ -163,8 +249,11 @@ export default function OperatorDashboard() {
       // Update selected order
       setSelectedOrder({ ...selectedOrder, status: selectedStatus });
 
-      // Close modal after successful update
+      // Close modal after update
       handleCloseEditModal();
+
+      // latest data
+      fetchOrders(true);
     } catch (err) {
       setUpdateError(err.message || "Failed to update order status");
       console.error("Error:", err);
@@ -225,7 +314,43 @@ export default function OperatorDashboard() {
 
   return (
     <div className="checkout-section mt-2">
-      <h1 className="checkout-section-title">Operator Dashboard</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="checkout-section-title">Operator Dashboard</h1>
+        <div className="flex items-center gap-3">
+          {/* New Orders Notification */}
+          {/* Sliding Notification */}
+          {newOrdersCount == 0 && (
+            <div
+              className="fixed top-4 right-0 z-50"
+              style={{
+                animation: "slideInOut 5s ease-in-out forwards",
+              }}
+            >
+              <div className="bg-green-600 text-white px-6 py-3 rounded-l-lg shadow-lg flex items-center gap-3">
+                <div className="bg-white bg-opacity-20 rounded-full p-2">
+                  <i className="fas fa-bell text-lg text-green-500"></i>
+                </div>
+                <div>
+                  <p className="font-bold text-lg">New Order!</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Refresh Button */}
+          <button
+            onClick={handleManualRefresh}
+            disabled={loading || isRefreshing}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Refresh orders"
+          >
+            <i
+              className={`fas fa-sync-alt ${
+                isRefreshing ? "animate-spin" : ""
+              }`}
+            ></i>
+          </button>
+        </div>
+      </div>
       {/* Filters */}
       <div className="mt-4 space-y-3">
         <div>
