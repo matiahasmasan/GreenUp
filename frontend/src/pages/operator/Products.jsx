@@ -23,6 +23,7 @@ export default function OperatorProducts() {
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [tempAvailability, setTempAvailability] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productError, setProductError] = useState("");
   const productsPerPage = 5;
@@ -72,18 +73,13 @@ export default function OperatorProducts() {
   // Action handlers
   const handleEdit = (product) => {
     setSelectedProduct(product);
+    setTempAvailability(product.is_available === 1);
     setEditModalOpen(true);
     setProductError("");
   };
 
-  const handleToggleAvailability = async () => {
+  const handleSaveAvailability = async () => {
     if (!selectedProduct) return;
-
-    // Determine new status (toggle the current boolean)
-    const currentStatus =
-      selectedProduct.is_available === 1 ||
-      selectedProduct.is_available === true;
-    const newStatus = !currentStatus;
 
     try {
       setEditLoading(true);
@@ -92,23 +88,20 @@ export default function OperatorProducts() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: selectedProduct.name,
-          is_available: newStatus,
+          is_available: tempAvailability,
         }),
       });
 
       if (!res.ok) throw new Error("Failed to update availability");
 
-      // Update local products list immediately
       setProducts((prev) =>
         prev.map((p) =>
           p.name === selectedProduct.name
-            ? { ...p, is_available: newStatus }
+            ? { ...p, is_available: tempAvailability }
             : p
         )
       );
 
-      // Update the selected product in the modal view
-      setSelectedProduct({ ...selectedProduct, is_available: newStatus });
       setEditModalOpen(false);
     } catch (err) {
       setProductError(err.message);
@@ -402,10 +395,11 @@ export default function OperatorProducts() {
         )}
       </Modal>
       {/* Edit Product Modal */}
+      {/* Edit Product Modal */}
       <Modal
         isOpen={editModalOpen}
         onClose={() => setEditModalOpen(false)}
-        title={`Edit Availability: ${selectedProduct?.name}`}
+        title={`Edit: ${selectedProduct?.name}`}
         variant="edit"
         loading={editLoading}
         error={productError}
@@ -413,13 +407,16 @@ export default function OperatorProducts() {
           <>
             <button
               onClick={() => setEditModalOpen(false)}
-              className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition"
+              className="px-6 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition font-semibold"
             >
               Cancel
             </button>
             <button
-              onClick={handleToggleAvailability}
-              disabled={editLoading}
+              onClick={handleSaveAvailability}
+              disabled={
+                editLoading ||
+                tempAvailability === (selectedProduct?.is_available === 1)
+              }
               className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50"
             >
               {editLoading ? "Saving..." : "Save Changes"}
@@ -430,44 +427,33 @@ export default function OperatorProducts() {
         {selectedProduct && (
           <div className="space-y-6 flex flex-col items-center py-4">
             <p className="text-gray-600 text-center">
-              Toggle the switch below to change the availability of{" "}
+              Adjust the availability for{" "}
               <strong>{selectedProduct.name}</strong>.
             </p>
 
             <div className="flex items-center gap-4">
               <span
                 className={`text-sm font-bold ${
-                  !(
-                    selectedProduct.is_available === 1 ||
-                    selectedProduct.is_available === true
-                  )
-                    ? "text-red-600"
-                    : "text-gray-400"
+                  !tempAvailability ? "text-red-600" : "text-gray-400"
                 }`}
               >
                 Out of Stock
               </span>
 
-              {/* Toggle Component */}
+              {/* Toggle Component - Now updates local temp state only */}
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="checkbox"
                   className="sr-only peer"
-                  checked={
-                    selectedProduct.is_available === 1 ||
-                    selectedProduct.is_available === true
-                  }
-                  onChange={handleToggleAvailability}
+                  checked={tempAvailability}
+                  onChange={(e) => setTempAvailability(e.target.checked)}
                 />
                 <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
               </label>
 
               <span
                 className={`text-sm font-bold ${
-                  selectedProduct.is_available === 1 ||
-                  selectedProduct.is_available === true
-                    ? "text-green-600"
-                    : "text-gray-400"
+                  tempAvailability ? "text-green-600" : "text-gray-400"
                 }`}
               >
                 Available
