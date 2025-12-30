@@ -55,15 +55,10 @@ export default function OperatorProducts() {
   }
 
   // Action handlers
-  const handleView = (productId) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      setSelectedProduct(product);
-      setViewModalOpen(true);
-      setProductError("");
-    } else {
-      setProductError("Product not found");
-    }
+  const handleView = (product) => {
+    setSelectedProduct(product);
+    setViewModalOpen(true);
+    setProductError("");
   };
 
   const handleCloseModal = () => {
@@ -234,7 +229,7 @@ export default function OperatorProducts() {
                         <div className="flex justify-center gap-2">
                           {/* VIEW BUTTON */}
                           <button
-                            onClick={() => handleView(product.id)}
+                            onClick={() => handleView(product)}
                             className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-blue-600 transition"
                             title="View product"
                           >
@@ -329,7 +324,7 @@ export default function OperatorProducts() {
                   <img
                     src={selectedProduct.image_url}
                     alt={selectedProduct.name}
-                    className="w-64 h-64 object-cover rounded-lg border border-gray-200"
+                    className="w-48 h-48 object-cover rounded-lg border border-gray-200"
                   />
                 </div>
               </div>
