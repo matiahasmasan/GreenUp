@@ -3,6 +3,7 @@ import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
 import SearchBar from "../../components/SearchBar";
+import Modal from "../../components/common/Modal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -19,6 +20,9 @@ export default function OperatorProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [filterAvailability, setFilterAvailability] = useState(null);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [productError, setProductError] = useState("");
   const productsPerPage = 5;
 
   useEffect(() => {
@@ -49,6 +53,24 @@ export default function OperatorProducts() {
       setLoading(false);
     }
   }
+
+  // Action handlers
+  const handleView = (productId) => {
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setViewModalOpen(true);
+      setProductError("");
+    } else {
+      setProductError("Product not found");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setViewModalOpen(false);
+    setSelectedProduct(null);
+    setProductError("");
+  };
 
   const filteredProducts = useMemo(() => {
     let filtered = products;
@@ -183,31 +205,18 @@ export default function OperatorProducts() {
               <thead>
                 <tr className="bg-gray-100 border-b-2 border-gray-200">
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">
-                    Image
-                  </th>
-                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
                     Name
-                  </th>
-                  <th className="px-3 py-3 text-left font-semibold text-gray-700">
-                    Description
                   </th>
                   <th className="px-3 py-3 text-left font-semibold text-gray-700">
                     Category
                   </th>
-                  <th className="px-3 py-3 text-right font-semibold text-gray-700">
-                    Price
-                  </th>
                   <th className="px-3 py-3 text-center font-semibold text-gray-700">
-                    Status
+                    Actions
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {currentProducts.map((product, index) => {
-                  const availability = getAvailabilityStatus(
-                    product.is_available
-                  );
-
                   return (
                     <tr
                       key={`${product.name}-${product.price}`}
@@ -215,37 +224,23 @@ export default function OperatorProducts() {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       }`}
                     >
-                      <td className="px-3 py-3">
-                        {product.image_url ? (
-                          <img
-                            src={product.image_url}
-                            alt={product.name}
-                            className="w-16 h-16 object-cover rounded"
-                          />
-                        ) : (
-                          <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center text-gray-400 text-xs">
-                            No Image
-                          </div>
-                        )}
-                      </td>
                       <td className="px-3 py-3 font-semibold text-gray-800">
                         {product.name}
-                      </td>
-                      <td className="px-3 py-3 text-gray-700 max-w-xs truncate">
-                        {product.description || "—"}
                       </td>
                       <td className="px-3 py-3 text-gray-700">
                         {getCategoryLabel(product.category_id)}
                       </td>
-                      <td className="px-3 py-3 text-right text-gray-800 font-semibold">
-                        {priceFormatter.format(Number(product.price))}
-                      </td>
-                      <td className="px-3 py-3 text-center">
-                        <span
-                          className={`inline-block px-2 py-1 rounded text-xs font-semibold ${availability.className}`}
-                        >
-                          {availability.text}
-                        </span>
+                      <td className="px-3 py-3">
+                        <div className="flex justify-center gap-2">
+                          {/* VIEW BUTTON */}
+                          <button
+                            onClick={() => handleView(product.id)}
+                            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-blue-600 transition"
+                            title="View product"
+                          >
+                            <i className="fas fa-eye "></i>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -265,6 +260,95 @@ export default function OperatorProducts() {
           />
         </div>
       )}
+
+      {/* View Product Modal */}
+      <Modal
+        isOpen={viewModalOpen}
+        onClose={handleCloseModal}
+        title={`Product: ${selectedProduct?.name || ""}`}
+        variant="view"
+        loading={false}
+        error={productError}
+        footerButtons={
+          <button
+            onClick={handleCloseModal}
+            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
+          >
+            Close
+          </button>
+        }
+      >
+        {selectedProduct && (
+          <div className="space-y-6">
+            {/* Product Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Product Name
+                </p>
+                <p className="text-gray-800">{selectedProduct.name}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Category
+                </p>
+                <p className="text-gray-800">
+                  {getCategoryLabel(selectedProduct.category_id)}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Price
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  {priceFormatter.format(Number(selectedProduct.price))}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Availability
+                </p>
+                <span
+                  className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
+                    getAvailabilityStatus(selectedProduct.is_available)
+                      .className
+                  }`}
+                >
+                  {getAvailabilityStatus(selectedProduct.is_available).text}
+                </span>
+              </div>
+            </div>
+
+            {/* Product Image */}
+            {selectedProduct.image_url && (
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">
+                  Product Image
+                </p>
+                <div className="flex justify-center">
+                  <img
+                    src={selectedProduct.image_url}
+                    alt={selectedProduct.name}
+                    className="w-64 h-64 object-cover rounded-lg border border-gray-200"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Product Description */}
+            {selectedProduct.description && (
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-2">
+                  Description
+                </p>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-700">{selectedProduct.description}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
