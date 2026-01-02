@@ -4,6 +4,7 @@ import Pagination from "../../components/common/Pagination";
 import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
 import SearchBar from "../../components/SearchBar";
 import Modal from "../../components/common/Modal";
+import ProductFilters from "../../components/ProductFilters";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -172,53 +173,23 @@ export default function OperatorProducts() {
       <h1 className="checkout-section-title">Products</h1>
 
       {/* Filters */}
-      <div className="mt-4 space-y-3">
-        <div>
-          <SearchBar
-            variant="simple"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(value) => {
-              setSearchTerm(value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        <div className="flex gap-3 flex-wrap">
-          <select
-            value={filterCategory === null ? "" : filterCategory}
-            onChange={(e) => {
-              const value = e.target.value;
-              setFilterCategory(value === "" ? null : Number(value));
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">All Categories</option>
-            {CATEGORY_OPTIONS.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filterAvailability ?? ""}
-            onChange={(e) => {
-              setFilterAvailability(
-                e.target.value === "" ? null : e.target.value
-              );
-              setCurrentPage(1);
-            }}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-          >
-            <option value="">All Availability</option>
-            <option value="available">Available</option>
-            <option value="unavailable">Out of Stock</option>
-          </select>
-        </div>
-      </div>
+      <ProductFilters
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setCurrentPage(1);
+        }}
+        filterCategory={filterCategory}
+        onCategoryChange={(value) => {
+          setFilterCategory(value);
+          setCurrentPage(1);
+        }}
+        filterAvailability={filterAvailability}
+        onAvailabilityChange={(value) => {
+          setFilterAvailability(value);
+          setCurrentPage(1);
+        }}
+      />
 
       {loading && <p className="text-gray-500 mt-4">Loading products...</p>}
 
