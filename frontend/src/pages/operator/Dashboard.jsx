@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import "../../App.css";
 import { formatDate } from "../../utils/dateFormatter";
 import Pagination from "../../components/common/Pagination";
-import SearchBar from "../../components/SearchBar";
 import Modal from "../../components/common/Modal";
-
+import OrderFilters from "../../components/OrderFilters";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const POLLING_INTERVAL = 5000; // 5 seconds
 
@@ -352,51 +351,23 @@ export default function OperatorDashboard() {
         </div>
       </div>
       {/* Filters */}
-      <div className="mt-4 space-y-3">
-        <div>
-          {/* Searchbar */}
-          <SearchBar
-            variant="simple"
-            placeholder="Search order..."
-            value={searchTerm}
-            onChange={(value) => {
-              setSearchTerm(value);
-              setCurrentPage(1);
-            }}
-          />
-        </div>
-
-        {/* Filters */}
-        <div className="flex gap-3 flex-wrap items-center">
-          {/* Date range filter */}
-          <div className="flex gap-2 flex-wrap items-center">
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-600 mb-1">From date</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => {
-                  setFromDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              />
-            </div>
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-600 mb-1">To date</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => {
-                  setToDate(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+      <OrderFilters
+        searchTerm={searchTerm}
+        onSearchChange={(value) => {
+          setSearchTerm(value);
+          setCurrentPage(1);
+        }}
+        fromDate={fromDate}
+        onFromDateChange={(value) => {
+          setFromDate(value);
+          setCurrentPage(1);
+        }}
+        toDate={toDate}
+        onToDateChange={(value) => {
+          setToDate(value);
+          setCurrentPage(1);
+        }}
+      />
       {loading && <p className="text-gray-500">Loading orders...</p>}
 
       {error && (
