@@ -2,9 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
-import SearchBar from "../../components/SearchBar";
-import Modal from "../../components/common/Modal";
 import EditProductModal from "../../components/EditProductModal";
+import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -279,93 +278,13 @@ export default function OperatorProducts() {
       )}
 
       {/* View Product Modal */}
-      <Modal
+      <ViewProductModal
         isOpen={viewModalOpen}
         onClose={handleCloseModal}
-        title={`Product: ${selectedProduct?.name || ""}`}
-        variant="view"
+        selectedProduct={selectedProduct}
         loading={false}
         error={productError}
-        footerButtons={
-          <button
-            onClick={handleCloseModal}
-            className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold"
-          >
-            Close
-          </button>
-        }
-      >
-        {selectedProduct && (
-          <div className="space-y-6">
-            {/* Product Info */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-1">
-                  Product Name
-                </p>
-                <p className="text-gray-800">{selectedProduct.name}</p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-1">
-                  Category
-                </p>
-                <p className="text-gray-800">
-                  {getCategoryLabel(selectedProduct.category_id)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-1">
-                  Price
-                </p>
-                <p className="text-lg font-bold text-green-600">
-                  {priceFormatter.format(Number(selectedProduct.price))}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-1">
-                  Availability
-                </p>
-                <span
-                  className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
-                    getAvailabilityStatus(selectedProduct.is_available)
-                      .className
-                  }`}
-                >
-                  {getAvailabilityStatus(selectedProduct.is_available).text}
-                </span>
-              </div>
-            </div>
-
-            {/* Product Image */}
-            {selectedProduct.image_url && (
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-2">
-                  Product Image
-                </p>
-                <div className="flex justify-center">
-                  <img
-                    src={selectedProduct.image_url}
-                    alt={selectedProduct.name}
-                    className="w-48 h-48 object-cover rounded-lg border border-gray-200"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Product Description */}
-            {selectedProduct.description && (
-              <div>
-                <p className="text-sm font-semibold text-gray-600 mb-2">
-                  Description
-                </p>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700">{selectedProduct.description}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
+      />
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={editModalOpen}
