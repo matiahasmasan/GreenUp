@@ -8,11 +8,6 @@ import ProductFilters from "../../components/ProductFilters";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
-const priceFormatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
-
 export default function OperatorProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -156,16 +151,6 @@ export default function OperatorProducts() {
     if (!categoryId) return "Uncategorized";
     const category = CATEGORY_OPTIONS.find((opt) => opt.id === categoryId);
     return category ? category.label : "Unknown";
-  };
-
-  const getAvailabilityStatus = (isAvailable) => {
-    const available = isAvailable === 1 || isAvailable === true;
-    return {
-      text: available ? "Available" : "Out of Stock",
-      className: available
-        ? "bg-green-50 text-green-700"
-        : "bg-red-50 text-red-600",
-    };
   };
 
   return (
