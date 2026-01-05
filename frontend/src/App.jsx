@@ -3,6 +3,7 @@ import "./App.css";
 import FooterBar from "./components/FooterBar";
 import AppRouter from "./components/AppRouter";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { useNavigation } from "./hooks/useNavigation";
 
 function AppContent() {
   const { logout } = useAuth();
@@ -26,32 +27,7 @@ function AppContent() {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
 
-  const handleNavigate = (key) => {
-    let routeKey = key;
-
-    if (key === "home" || key === "menu") setRoute("home");
-    else if (key === "cart") setRoute("cart");
-    else if (key === "checkout") setRoute("checkout");
-    else if (key === "confirmed") setRoute("confirmed");
-    else if (key === "login") setRoute("login");
-    else if (key === "admin-dashboard") setRoute("admin-dashboard");
-    else if (key === "operator-dashboard") setRoute("operator-dashboard");
-    else if (key === "products") setRoute("products");
-    else if (key === "logout") {
-      logout();
-      setRoute("login");
-      routeKey = "login";
-      setCartItems([]);
-    } else if (key === "flag") {
-      console.log("Not implemented");
-    }
-
-    try {
-      window.location.hash = routeKey;
-    } catch (e) {
-      console.error("Failed to set hash:", e);
-    }
-  };
+  const handleNavigate = useNavigation(setRoute, logout, setCartItems);
 
   const addToCart = (item, quantity) => {
     setCartItems((prevItems) => {
