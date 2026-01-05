@@ -6,7 +6,7 @@ import AdminLogin from "../pages/AdminLogin";
 import ClientHome from "../pages/client/Home";
 import OperatorDashboard from "../pages/operator/Dashboard";
 import OperatorProducts from "../pages/operator/Products";
-import AdminDashboardPlaceholder from "../pages/admin/AdminDashboardPlaceholder";
+import AdminDashboard from "../pages/admin/AdminDashboard";
 import NotFound from "../pages/NotFound";
 
 export default function AppRouter({
@@ -55,7 +55,7 @@ export default function AppRouter({
   }
 
   if (route === "admin-dashboard") {
-    return <AdminDashboardPlaceholder onNavigate={onNavigate} />;
+    return <AdminDashboard onNavigate={onNavigate} />;
   }
 
   if (route === "operator-dashboard") {
