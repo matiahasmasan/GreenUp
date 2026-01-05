@@ -4,6 +4,7 @@ import FooterBar from "./components/FooterBar";
 import AppRouter from "./components/AppRouter";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { useNavigation } from "./hooks/useNavigation";
+import { useCart } from "./hooks/useCart";
 
 function AppContent() {
   const { logout } = useAuth();
@@ -15,8 +16,20 @@ function AppContent() {
       return "home";
     }
   });
-  const [cartItems, setCartItems] = useState([]);
   const [lastOrder, setLastOrder] = useState(null);
+
+  // Cart management
+  const {
+    cartItems,
+    cartItemCount,
+    addToCart,
+    updateCartItemQuantity,
+    removeFromCart,
+    clearCart,
+  } = useCart();
+
+  // Navigation management
+  const handleNavigate = useNavigation(setRoute, logout, clearCart);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -26,48 +39,6 @@ function AppContent() {
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
-
-  const handleNavigate = useNavigation(setRoute, logout, setCartItems);
-
-  const addToCart = (item, quantity) => {
-    setCartItems((prevItems) => {
-      const itemKey = `${item.name}-${item.price}`;
-      const existingItem = prevItems.find(
-        (i) => `${i.name}-${i.price}` === itemKey
-      );
-
-      if (existingItem) {
-        return prevItems.map((i) =>
-          `${i.name}-${i.price}` === itemKey
-            ? { ...i, quantity: i.quantity + quantity }
-            : i
-        );
-      }
-
-      return [...prevItems, { ...item, quantity, cartKey: itemKey }];
-    });
-  };
-
-  const updateCartItemQuantity = (itemKey, newQuantity) => {
-    if (newQuantity <= 0) {
-      removeFromCart(itemKey);
-      return;
-    }
-
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.cartKey === itemKey ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeFromCart = (itemKey) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.cartKey !== itemKey)
-    );
-  };
-
-  const cartItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <div className="app">
@@ -80,7 +51,7 @@ function AppContent() {
         onUpdateQuantity={updateCartItemQuantity}
         onRemoveItem={removeFromCart}
         onSetLastOrder={setLastOrder}
-        onClearCart={() => setCartItems([])}
+        onClearCart={clearCart}
       />
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
