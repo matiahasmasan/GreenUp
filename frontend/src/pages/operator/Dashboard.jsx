@@ -6,6 +6,7 @@ import EditOrderModal from "../../components/EditOrderModal";
 import OrderFilters from "../../components/OrderFilters";
 import OrdersTable from "../../components/OrdersTable";
 import RefreshButton from "../../components/RefreshButton";
+import NewOrderNotification from "../../components/NewOrderNotification";
 import { useOrderPolling } from "../../hooks/useOrderPolling";
 import { useOrderModal } from "../../hooks/useOrderModal";
 
@@ -18,7 +19,7 @@ export default function OperatorDashboard() {
   const [toDate, setToDate] = useState("");
   const ordersPerPage = 10;
 
-  // Custom hook for polling orders
+  // hook for polling orders
   const {
     orders,
     loading,
@@ -31,7 +32,7 @@ export default function OperatorDashboard() {
     setOrders,
   } = useOrderPolling(API_BASE_URL);
 
-  // Custom hook for modal management
+  // hook for modal management
   const {
     viewModalOpen,
     editModalOpen,
@@ -114,25 +115,7 @@ export default function OperatorDashboard() {
       <div className="flex justify-between items-center mb-2">
         <h1 className="checkout-section-title">Operator Dashboard</h1>
         <div className="flex items-center gap-3">
-          {/* New Orders Notification */}
-          {newOrdersCount > 0 && (
-            <div
-              className="fixed top-4 right-0 z-50"
-              style={{
-                animation: "slideInOut 5s ease-in-out forwards",
-              }}
-            >
-              <div className="bg-green-600 text-white px-6 py-3 rounded-l-lg shadow-lg flex items-center gap-3">
-                <div className="bg-white bg-opacity-20 rounded-full p-2">
-                  <i className="fas fa-bell text-lg text-green-500"></i>
-                </div>
-                <div>
-                  <p className="font-bold text-lg">New Order!</p>
-                </div>
-              </div>
-            </div>
-          )}
-          {/* Refresh Button */}
+          <NewOrderNotification newOrdersCount={newOrdersCount} />
           <RefreshButton
             onClick={handleManualRefresh}
             isRefreshing={isRefreshing}
@@ -141,7 +124,7 @@ export default function OperatorDashboard() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and DATE */}
       <OrderFilters
         searchTerm={searchTerm}
         onSearchChange={(value) => {
