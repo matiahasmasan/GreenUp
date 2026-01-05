@@ -5,6 +5,7 @@ import ViewOrderModal from "../../components/ViewOrderModal";
 import EditOrderModal from "../../components/EditOrderModal";
 import OrderFilters from "../../components/OrderFilters";
 import OrdersTable from "../../components/OrdersTable";
+import RefreshButton from "../../components/RefreshButton";
 import { useOrderPolling } from "../../hooks/useOrderPolling";
 import { useOrderModal } from "../../hooks/useOrderModal";
 
@@ -132,18 +133,11 @@ export default function OperatorDashboard() {
             </div>
           )}
           {/* Refresh Button */}
-          <button
+          <RefreshButton
             onClick={handleManualRefresh}
-            disabled={loading || isRefreshing}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            title="Refresh orders"
-          >
-            <i
-              className={`fas fa-sync-alt ${
-                isRefreshing ? "animate-spin" : ""
-              }`}
-            ></i>
-          </button>
+            isRefreshing={isRefreshing}
+            disabled={loading}
+          />
         </div>
       </div>
 
