@@ -6,7 +6,7 @@ import AdminLogin from "../pages/AdminLogin";
 import ClientHome from "../pages/client/Home";
 import OperatorDashboard from "../pages/operator/Dashboard";
 import OperatorProducts from "../pages/operator/Products";
-import AdminDashboardPlaceholder from "./AdminDashboardPlaceholder";
+import AdminDashboardPlaceholder from "../pages/admin/AdminDashboardPlaceholder";
 import NotFound from "../pages/NotFound";
 
 export default function AppRouter({
