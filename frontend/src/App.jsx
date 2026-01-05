@@ -23,6 +23,10 @@ import {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
+// To DO
+// AppRouter / RouteSwitch - The entire routing logic (all the conditional route rendering).
+// AdminDashboardPlaceholder - The temporary admin dashboard content (the section with "UI coming soon...")
+
 function AppContent() {
   const { user, logout } = useAuth();
   const [route, setRoute] = useState(() => {
@@ -242,9 +246,7 @@ function AppContent() {
         <OperatorDashboard onNavigate={handleNavigate} />
       )}
 
-      {route === "products" && (
-        <OperatorProducts onNavigate={handleNavigate} />
-      )}
+      {route === "products" && <OperatorProducts onNavigate={handleNavigate} />}
 
       {![
         "home",
