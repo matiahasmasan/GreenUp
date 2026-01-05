@@ -1,31 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import "./App.css";
-import Hero from "./components/Hero";
-import MenuSection from "./components/MenuSection";
-import SearchBar from "./components/SearchBar";
-import CategoryTabs, { CATEGORY_OPTIONS } from "./components/CategoryTabs";
+import { CATEGORY_OPTIONS } from "./components/CategoryTabs";
 import FooterBar from "./components/FooterBar";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import ConfirmedOrder from "./pages/ConfirmedOrder";
-import AdminLogin from "./pages/AdminLogin";
-import ClientHome from "./pages/client/Home";
-import OperatorDashboard from "./pages/operator/Dashboard";
-import OperatorProducts from "./pages/operator/Products";
-import AdminDashboard from "./pages/admin/Dashboard";
-import NotFound from "./pages/NotFound";
+import AppRouter from "./components/AppRouter";
 import { AuthProvider, useAuth } from "./context/AuthContext";
-import {
-  setAuthToken,
-  getCurrentUser,
-  logout as logoutAuth,
-} from "./utils/authUtils";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
-// To DO
-// AppRouter / RouteSwitch - The entire routing logic (all the conditional route rendering).
-// AdminDashboardPlaceholder - The temporary admin dashboard content (the section with "UI coming soon...")
 
 function AppContent() {
   const { user, logout } = useAuth();
@@ -191,74 +171,17 @@ function AppContent() {
 
   return (
     <div className="app">
-      {route === "home" && (
-        <>
-          <ClientHome onNavigate={handleNavigate} onAddToCart={addToCart} />
-        </>
-      )}
-
-      {route === "cart" && (
-        <Cart
-          cartItems={cartItems}
-          onUpdateQuantity={updateCartItemQuantity}
-          onRemoveItem={removeFromCart}
-          onNavigate={handleNavigate}
-        />
-      )}
-
-      {route === "checkout" && (
-        <Checkout
-          cartItems={cartItems}
-          onNavigate={handleNavigate}
-          onSetLastOrder={setLastOrder}
-          onClearCart={() => setCartItems([])}
-        />
-      )}
-
-      {route === "confirmed" && (
-        <ConfirmedOrder lastOrder={lastOrder} onNavigate={handleNavigate} />
-      )}
-
-      {route === "login" && <AdminLogin onNavigate={handleNavigate} />}
-
-      {route === "admin-dashboard" && (
-        <div className="checkout-container" style={{ paddingTop: 24 }}>
-          <div
-            className="checkout-section"
-            style={{ maxWidth: 560, margin: "0 auto" }}
-          >
-            <h2 className="checkout-section-title">Admin Dashboard</h2>
-            <p style={{ marginTop: 12 }}>
-              Welcome to the admin dashboard. UI coming soon...
-            </p>
-            <button
-              className="checkout-back"
-              onClick={() => handleNavigate("home")}
-              style={{ marginTop: 12 }}
-            >
-              Back to Home
-            </button>
-          </div>
-        </div>
-      )}
-
-      {route === "operator-dashboard" && (
-        <OperatorDashboard onNavigate={handleNavigate} />
-      )}
-
-      {route === "products" && <OperatorProducts onNavigate={handleNavigate} />}
-
-      {![
-        "home",
-        "cart",
-        "checkout",
-        "confirmed",
-        "login",
-        "admin-dashboard",
-        "operator-dashboard",
-        "products",
-      ].includes(route) && <NotFound onNavigate={handleNavigate} />}
-
+      <AppRouter
+        route={route}
+        cartItems={cartItems}
+        lastOrder={lastOrder}
+        onNavigate={handleNavigate}
+        onAddToCart={addToCart}
+        onUpdateQuantity={updateCartItemQuantity}
+        onRemoveItem={removeFromCart}
+        onSetLastOrder={setLastOrder}
+        onClearCart={() => setCartItems([])}
+      />
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>
   );
