@@ -1,14 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
-import { CATEGORY_OPTIONS } from "./components/CategoryTabs";
 import FooterBar from "./components/FooterBar";
 import AppRouter from "./components/AppRouter";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-
 function AppContent() {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const [route, setRoute] = useState(() => {
     try {
       const hash = window.location.hash.replace(/^#/, "");
@@ -17,11 +14,6 @@ function AppContent() {
       return "home";
     }
   });
-  const [menuItems, setMenuItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [activeCategory, setActiveCategory] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [lastOrder, setLastOrder] = useState(null);
 
@@ -33,74 +25,6 @@ function AppContent() {
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchMenu() {
-      try {
-        setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/menu-items`, {
-          signal: controller.signal,
-        });
-
-        if (!res.ok) {
-          throw new Error("Unable to load menu");
-        }
-
-        const data = await res.json();
-        setMenuItems(
-          data.map((item) => ({
-            ...item,
-            category_id: item.category_id ? Number(item.category_id) : null,
-          }))
-        );
-        setError("");
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          setError(err.message || "Failed to load menu");
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchMenu();
-    return () => controller.abort();
-  }, []);
-
-  const filteredItems = useMemo(() => {
-    const needle = searchTerm.trim().toLowerCase();
-    if (!needle) return menuItems;
-
-    return menuItems.filter((item) => {
-      const haystack = `${item.name ?? ""} ${
-        item.description ?? ""
-      }`.toLowerCase();
-      return haystack.includes(needle);
-    });
-  }, [menuItems, searchTerm]);
-
-  const availableCategoryIds = useMemo(() => {
-    const ids = Array.from(
-      new Set(filteredItems.map((item) => item.category_id).filter(Boolean))
-    );
-    const order = CATEGORY_OPTIONS.map((option) => option.id);
-    return ids.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  }, [filteredItems]);
-
-  useEffect(() => {
-    if (!availableCategoryIds.length) {
-      if (activeCategory !== null) {
-        setActiveCategory(null);
-      }
-      return;
-    }
-
-    if (activeCategory && !availableCategoryIds.includes(activeCategory)) {
-      setActiveCategory(null);
-    }
-  }, [activeCategory, availableCategoryIds]);
 
   const handleNavigate = (key) => {
     let routeKey = key;
@@ -116,7 +40,7 @@ function AppContent() {
     else if (key === "logout") {
       logout();
       setRoute("login");
-      routeKey = "login"; // Set hash to login, not logout
+      routeKey = "login";
       setCartItems([]);
     } else if (key === "flag") {
       console.log("Not implemented");
