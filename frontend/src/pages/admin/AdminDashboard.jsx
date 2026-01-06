@@ -1,43 +1,5 @@
 import React from "react";
-
-// Metric Card Component
-const MetricCard = ({
-  title,
-  value,
-  subtitle,
-  icon,
-  color,
-  bgColor,
-  trend,
-}) => {
-  return (
-    <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <h3 className="text-3xl font-bold text-gray-900 mb-2">{value}</h3>
-          {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-          {trend && (
-            <div
-              className={`flex items-center gap-1 mt-2 text-sm ${
-                trend.positive ? "text-green-600" : "text-red-600"
-              }`}
-            >
-              <i
-                className={`fas fa-arrow-${trend.positive ? "up" : "down"}`}
-              ></i>
-              <span className="font-medium">{trend.value}</span>
-              <span className="text-gray-500">vs yesterday</span>
-            </div>
-          )}
-        </div>
-        <div className={`${bgColor} p-3 rounded-lg`}>
-          <i className={`${icon} text-xl ${color}`}></i>
-        </div>
-      </div>
-    </div>
-  );
-};
+import MetricCard from "../../components/MetricCard";
 
 export default function AdminDashboard() {
   // Static data for UI/UX development
@@ -54,7 +16,7 @@ export default function AdminDashboard() {
     cancelledOrders: {
       value: 3,
       percentage: "6.4%",
-      trend: { value: "-2%", positive: true },
+      trend: { value: "-2%", positive: false },
     },
     netProfit: {
       value: "1,423.75",
@@ -69,17 +31,13 @@ export default function AdminDashboard() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="checkout-section-title">Admin Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Overview of today's performance
-          </p>
         </div>
 
         {/* Quick date display */}
-        <div className="text-right">
+        <div>
           <p className="text-sm text-gray-500">Today</p>
           <p className="text-sm font-medium text-gray-700">
             {new Date().toLocaleDateString("ro-RO", {
-              weekday: "long",
               year: "numeric",
               month: "long",
               day: "numeric",

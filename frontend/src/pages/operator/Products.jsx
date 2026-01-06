@@ -156,7 +156,10 @@ export default function OperatorProducts() {
   return (
     <div className="checkout-section mt-2">
       <h1 className="checkout-section-title">Products</h1>
-
+      {/* TO DO: ADD PRODUCT BUTTON (name, category) */}
+      {/* possible feature: automatic toggle of item stock based on availability */}
+      {/* but leave the manual toggle */}
+      {/* make the admin and operator have the possibility to add stocks */}
       {/* Filters */}
       <ProductFilters
         searchTerm={searchTerm}
