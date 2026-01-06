@@ -46,6 +46,11 @@ export default function AdminDashboard() {
       value: 47,
       trend: { value: "+12%", positive: true },
     },
+    totalRevenue: {
+      value: "2,847.50",
+      currency: "RON",
+      trend: { value: "+8.3%", positive: true },
+    },
   };
 
   return (
@@ -81,6 +86,15 @@ export default function AdminDashboard() {
           color="text-blue-600"
           bgColor="bg-blue-50"
           trend={metrics.ordersToday.trend}
+        />
+        <MetricCard
+          title="Total Revenue"
+          value={`${metrics.totalRevenue.value} ${metrics.totalRevenue.currency}`}
+          subtitle="Gross sales today"
+          icon="fas fa-dollar-sign"
+          color="text-green-600"
+          bgColor="bg-green-50"
+          trend={metrics.totalRevenue.trend}
         />
       </div>
     </div>
