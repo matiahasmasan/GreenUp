@@ -51,6 +51,11 @@ export default function AdminDashboard() {
       currency: "RON",
       trend: { value: "+8.3%", positive: true },
     },
+    cancelledOrders: {
+      value: 3,
+      percentage: "6.4%",
+      trend: { value: "-2%", positive: true },
+    },
   };
 
   return (
@@ -95,6 +100,15 @@ export default function AdminDashboard() {
           color="text-green-600"
           bgColor="bg-green-50"
           trend={metrics.totalRevenue.trend}
+        />
+        <MetricCard
+          title="Cancelled Orders"
+          value={metrics.cancelledOrders.value}
+          subtitle={`${metrics.cancelledOrders.percentage} of total orders`}
+          icon="fas fa-times-circle"
+          color="text-red-600"
+          bgColor="bg-red-50"
+          trend={metrics.cancelledOrders.trend}
         />
       </div>
     </div>
