@@ -56,6 +56,12 @@ export default function AdminDashboard() {
       percentage: "6.4%",
       trend: { value: "-2%", positive: true },
     },
+    netProfit: {
+      value: "1,423.75",
+      currency: "RON",
+      margin: "50%",
+      trend: { value: "+15.2%", positive: true },
+    },
   };
 
   return (
@@ -109,6 +115,15 @@ export default function AdminDashboard() {
           color="text-red-600"
           bgColor="bg-red-50"
           trend={metrics.cancelledOrders.trend}
+        />
+        <MetricCard
+          title="Net Profit"
+          value={`${metrics.netProfit.value} ${metrics.netProfit.currency}`}
+          subtitle={`${metrics.netProfit.margin} profit margin`}
+          icon="fas fa-piggy-bank"
+          color="text-purple-600"
+          bgColor="bg-purple-50"
+          trend={metrics.netProfit.trend}
         />
       </div>
     </div>
