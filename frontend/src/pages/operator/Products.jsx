@@ -5,6 +5,7 @@ import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
 import EditProductModal from "../../components/EditProductModal";
 import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
+import CreateProductModal from "../../components/CreateProductModal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -16,13 +17,16 @@ export default function OperatorProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [filterAvailability, setFilterAvailability] = useState(null);
-  const [viewModalOpen, setViewModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
   const [tempAvailability, setTempAvailability] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productError, setProductError] = useState("");
   const productsPerPage = 5;
+  // Modals state
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -106,6 +110,38 @@ export default function OperatorProducts() {
     }
   };
 
+  const handleCreateProduct = async (formData) => {
+    try {
+      setCreateLoading(true);
+      setProductError("");
+
+      const res = await fetch(`${API_BASE_URL}/menu-items`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          price: Number(formData.price),
+          image_url: formData.image_url,
+          category_id: Number(formData.category_id),
+          is_available: formData.is_available,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create product");
+      }
+
+      await fetchProducts(); // Refresh the product list
+      setCreateModalOpen(false);
+    } catch (err) {
+      setProductError(err.message);
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     let filtered = products;
 
@@ -155,7 +191,18 @@ export default function OperatorProducts() {
 
   return (
     <div className="checkout-section mt-2">
-      <h1 className="checkout-section-title">Products</h1>
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="checkout-section-title">Products</h1>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            title="Add Product"
+          >
+            <i className="fas fa-plus"></i>
+          </button>
+        </div>
+      </div>
       {/* TO DO: ADD PRODUCT BUTTON (name, category) */}
       {/* possible feature: automatic toggle of item stock based on availability */}
       {/* but leave the manual toggle */}
@@ -283,6 +330,16 @@ export default function OperatorProducts() {
         tempAvailability={tempAvailability}
         onAvailabilityChange={setTempAvailability}
         onSave={handleSaveAvailability}
+      />
+      <CreateProductModal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setProductError("");
+        }}
+        onSave={handleCreateProduct}
+        loading={createLoading}
+        error={productError}
       />
     </div>
   );

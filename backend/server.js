@@ -250,6 +250,58 @@ app.get("/history", async (_req, res) => {
   }
 });
 
+// POST /menu-items - Create a new menu item
+app.post("/menu-items", async (req, res) => {
+  const { name, description, price, image_url, category_id, is_available } =
+    req.body;
+
+  // Validate required fields
+  if (!name || !price || !category_id) {
+    return res.status(400).json({
+      error: "Missing required fields: name, price, category_id",
+    });
+  }
+
+  // Validate price
+  if (isNaN(price) || Number(price) <= 0) {
+    return res.status(400).json({
+      error: "Price must be a valid number greater than 0",
+    });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO menu_items (name, description, price, image_url, category_id, is_available) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        name,
+        description || null,
+        Number(price),
+        image_url || null,
+        Number(category_id),
+        is_available ? 1 : 0,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      id: result.insertId,
+      message: "Product created successfully",
+    });
+  } catch (err) {
+    console.error("Failed to create menu item", err);
+
+    // Check for duplicate entry
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        error: "A product with this name already exists",
+      });
+    }
+
+    res.status(500).json({ error: "Failed to create product" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`);

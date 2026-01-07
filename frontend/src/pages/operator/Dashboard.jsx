@@ -113,7 +113,7 @@ export default function OperatorDashboard() {
   return (
     <div className="checkout-section mt-2">
       <div className="flex justify-between items-center mb-2">
-        <h1 className="checkout-section-title">Operator Dashboard</h1>
+        <h1 className="checkout-section-title">Orders</h1>
         <div className="flex items-center gap-3">
           <NewOrderNotification newOrdersCount={newOrdersCount} />
           <RefreshButton
