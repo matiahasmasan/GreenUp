@@ -8,21 +8,7 @@ import ProductFilters from "../../components/ProductFilters";
 import CreateProductModal from "../../components/CreateProductModal";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-{
-  /* TO DO: ADD PRODUCT BUTTON (name, category) */
-}
-{
-  /* possible feature: automatic toggle of item stock based on availability */
-}
-{
-  /* but leave the manual toggle */
-}
-{
-  /* make the admin and operator have the possibility to add stocks */
-}
-{
-  /* Filters */
-}
+/* possible feature: automatic toggle of item stock based on availability but leave the manual toggle */
 
 export default function OperatorProducts() {
   const [products, setProducts] = useState([]);
@@ -140,6 +126,7 @@ export default function OperatorProducts() {
           image_url: formData.image_url,
           category_id: Number(formData.category_id),
           is_available: formData.is_available,
+          stocks: Number(formData.stocks),
         }),
       });
 
@@ -218,7 +205,7 @@ export default function OperatorProducts() {
           </button>
         </div>
       </div>
-
+      {/* Filters */}
       <ProductFilters
         searchTerm={searchTerm}
         onSearchChange={(value) => {

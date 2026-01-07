@@ -23,7 +23,7 @@ const pool = mysql.createPool({
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT name, description, price, image_url, category_id, is_available FROM menu_items ORDER BY category_id ASC, name ASC"
+      "SELECT name, description, price, image_url, category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC"
     );
     res.json(rows);
   } catch (err) {
@@ -252,13 +252,20 @@ app.get("/history", async (_req, res) => {
 
 // POST /menu-items - Create a new menu item
 app.post("/menu-items", async (req, res) => {
-  const { name, description, price, image_url, category_id, is_available } =
-    req.body;
+  const {
+    name,
+    description,
+    price,
+    image_url,
+    category_id,
+    is_available,
+    stocks,
+  } = req.body;
 
   // Validate required fields
-  if (!name || !price || !category_id) {
+  if (!name || !price || !category_id || stocks === undefined) {
     return res.status(400).json({
-      error: "Missing required fields: name, price, category_id",
+      error: "Missing required fields: name, price, category_id, stocks",
     });
   }
 
@@ -269,10 +276,17 @@ app.post("/menu-items", async (req, res) => {
     });
   }
 
+  // Validate stocks
+  if (isNaN(stocks) || Number(stocks) < 0) {
+    return res.status(400).json({
+      error: "Stocks must be a valid number greater than or equal to 0",
+    });
+  }
+
   try {
     const [result] = await pool.query(
-      `INSERT INTO menu_items (name, description, price, image_url, category_id, is_available) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO menu_items (name, description, price, image_url, category_id, is_available, stocks) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         description || null,
@@ -280,6 +294,7 @@ app.post("/menu-items", async (req, res) => {
         image_url || null,
         Number(category_id),
         is_available ? 1 : 0,
+        Number(stocks),
       ]
     );
 

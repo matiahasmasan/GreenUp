@@ -29,6 +29,26 @@ export default function ViewProductModal({
     };
   };
 
+  const getStockStatus = (stocks) => {
+    const stockCount = Number(stocks) || 0;
+    if (stockCount === 0) {
+      return {
+        text: "Out of Stock",
+        className: "bg-red-50 text-red-600",
+      };
+    } else if (stockCount <= 5) {
+      return {
+        text: `Low Stock (${stockCount})`,
+        className: "bg-yellow-50 text-yellow-700",
+      };
+    } else {
+      return {
+        text: `In Stock (${stockCount})`,
+        className: "bg-green-50 text-green-700",
+      };
+    }
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -69,6 +89,18 @@ export default function ViewProductModal({
               <p className="text-lg font-bold text-green-600">
                 {priceFormatter.format(Number(selectedProduct.price))}
               </p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-1">
+                Stock Status
+              </p>
+              <span
+                className={`inline-block px-3 py-1 rounded text-sm font-semibold ${
+                  getStockStatus(selectedProduct.stocks).className
+                }`}
+              >
+                {getStockStatus(selectedProduct.stocks).text}
+              </span>
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-600 mb-1">
