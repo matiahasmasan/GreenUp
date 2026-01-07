@@ -39,6 +39,10 @@ export default function CreateProductModal({
       errors.name = "Product name is required";
     }
 
+    if (!formData.description.trim()) {
+      errors.description = "Product description is required";
+    }
+
     if (
       !formData.price ||
       isNaN(formData.price) ||
@@ -177,17 +181,24 @@ export default function CreateProductModal({
         {/* Description */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Description
+            Description <span className="text-red-500">*</span>
           </label>
           <textarea
             name="description"
             value={formData.description}
             onChange={handleChange}
             rows="3"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-            placeholder="Enter product description (optional)"
+            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+              formErrors.description ? "border-red-500" : "border-gray-300"
+            }`}
+            placeholder="Enter product description"
             disabled={loading}
           />
+          {formErrors.description && (
+            <p className="text-red-500 text-sm mt-1">
+              {formErrors.description}
+            </p>
+          )}
         </div>
 
         {/* Image URL */}
@@ -214,7 +225,7 @@ export default function CreateProductModal({
               name="is_available"
               checked={formData.is_available}
               onChange={handleChange}
-              className="w-5 h-5 text-green-500 border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+              className="w-5 h-5 border-gray-300 rounded focus:ring-2 focus:ring-green-500 accent-green-500 cursor-pointer"
               disabled={loading}
             />
             <span className="ml-2 text-sm font-semibold text-gray-700">
