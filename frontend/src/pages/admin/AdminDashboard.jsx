@@ -67,6 +67,15 @@ export default function AdminDashboard() {
           color="text-green-600"
           bgColor="bg-green-50"
         />
+        {/* All-time cancelled orders */}
+        <MetricCard
+          title="Cancelled Orders"
+          value={stats.cancelledOrders}
+          subtitle="Total orders cancelled to date"
+          icon="fas fa-times-circle"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
       </div>
     </div>
   );

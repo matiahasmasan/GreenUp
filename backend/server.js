@@ -324,7 +324,8 @@ app.get("/stats", async (_req, res) => {
     const [rows] = await pool.query(`
       SELECT 
         COUNT(CASE WHEN status != 'cancelled' THEN 1 END) as active_orders,
-        SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END) as total_revenue
+        SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END) as total_revenue,
+        COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_orders
       FROM orders
     `);
 
