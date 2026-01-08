@@ -317,6 +317,28 @@ app.post("/menu-items", async (req, res) => {
   }
 });
 
+// admin cards
+// GET /stats - Retrieve dashboard metrics
+app.get("/stats", async (_req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        COUNT(CASE WHEN status != 'cancelled' THEN 1 END) as active_orders
+      FROM orders
+    `);
+
+    const stats = rows[0];
+    res.json({
+      activeOrders: stats.active_orders || 0,
+      totalRevenue: parseFloat(stats.total_revenue || 0).toFixed(2),
+      cancelledOrders: stats.cancelled_orders || 0,
+    });
+  } catch (err) {
+    console.error("Failed to fetch stats", err);
+    res.status(500).json({ error: "Failed to fetch stats" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`);
