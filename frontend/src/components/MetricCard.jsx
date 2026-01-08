@@ -22,7 +22,7 @@ export default function MetricCard({
           <p className="text-xs sm:text-sm font-medium text-gray-600 mb-1">
             {title}
           </p>
-          <h3 className="text-xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
+          <h3 className="text-md sm:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
             {value}
           </h3>
 

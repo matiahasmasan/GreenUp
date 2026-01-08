@@ -58,6 +58,7 @@ export default function AdminDashboard() {
           icon="fas fa-shopping-basket"
           color="text-green-600"
           bgColor="bg-green-50"
+          trend={{ positive: true, value: "+12%" }}
         />
         {/* Total revenue except cancelled */}
         <MetricCard
@@ -67,6 +68,7 @@ export default function AdminDashboard() {
           icon="fas fa-wallet"
           color="text-green-600"
           bgColor="bg-green-50"
+          trend={{ positive: true, value: "+12%" }}
         />
         {/* All-time cancelled orders */}
         <MetricCard
@@ -76,6 +78,7 @@ export default function AdminDashboard() {
           icon="fas fa-times-circle"
           color="text-green-600"
           bgColor="bg-green-50"
+          trend={{ positive: true, value: "+12%" }}
         />
         {/* Total profit - hardcoded for now */}
         <MetricCard
@@ -85,6 +88,7 @@ export default function AdminDashboard() {
           icon="fas fa-piggy-bank"
           color="text-green-600"
           bgColor="bg-green-50"
+          trend={{ positive: false, value: "-12%" }}
         />
         {/* TO DO */}
         {/* Busiest hours */}
