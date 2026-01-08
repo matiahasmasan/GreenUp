@@ -76,6 +76,19 @@ export default function AdminDashboard() {
           color="text-green-600"
           bgColor="bg-green-50"
         />
+        <MetricCard
+          title="Total Profit"
+          value={`${stats.totalRevenue} RON`}
+          subtitle="Total profit to date"
+          icon="fas fa-piggy-bank"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
+        {/* TO DO */}
+        {/* Busiest hours */}
+        {/* Top-selling dishes today / week */}
+        {/* Least ordered items */}
+        {/* Low/No stock alerts */}
       </div>
     </div>
   );
