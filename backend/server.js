@@ -353,6 +353,38 @@ app.get("/stats", async (_req, res) => {
   }
 });
 
+// GET /orders/:id/profit - profit for a specific order
+app.get("/orders/:id/profit", async (req, res) => {
+  const orderId = parseInt(req.params.id);
+
+  if (isNaN(orderId)) {
+    return res.status(400).json({ error: "Invalid order ID" });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `SELECT 
+        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as profit
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN menu_items m ON oi.item_name = m.name
+      WHERE o.id = ? AND o.status != 'cancelled'
+      GROUP BY o.id`,
+      [orderId]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ error: "Order not found or cancelled" });
+    }
+
+    const profit = parseFloat(result[0].profit || 0).toFixed(2);
+    res.json({ profit: profit });
+  } catch (err) {
+    console.error("Failed to fetch order profit", err);
+    res.status(500).json({ error: "Failed to fetch order profit" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`);
