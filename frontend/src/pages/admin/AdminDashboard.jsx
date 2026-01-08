@@ -58,6 +58,15 @@ export default function AdminDashboard() {
           color="text-green-600"
           bgColor="bg-green-50"
         />
+        {/* Total revenue except cancelled */}
+        <MetricCard
+          title="Total Revenue"
+          value={`${stats.totalRevenue} RON`}
+          subtitle="Excluding cancelled orders"
+          icon="fas fa-wallet"
+          color="text-green-600"
+          bgColor="bg-green-50"
+        />
       </div>
     </div>
   );
