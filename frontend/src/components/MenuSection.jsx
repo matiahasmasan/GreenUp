@@ -130,7 +130,14 @@ function MenuSection({
                         )}
                         <div className="menu-body">
                           <div className="menu-header">
-                            <h2>{item.name}</h2>
+                            <div className="menu-header-title">
+                              <h2>{item.name}</h2>
+                              {isUnavailable && (
+                                <span className="text-xs text-red-600 font-bold">
+                                  OUT OF STOCK
+                                </span>
+                              )}
+                            </div>
                             <span className="price">
                               {priceFormatter.format(Number(item.price))}
                             </span>

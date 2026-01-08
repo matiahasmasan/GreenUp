@@ -493,6 +493,13 @@ h1 {
   align-items: flex-start;
 }
 
+.menu-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 .menu-header h2 {
   font-size: 1rem;
   margin: 0;
