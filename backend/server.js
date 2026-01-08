@@ -321,7 +321,7 @@ app.post("/menu-items", async (req, res) => {
 // GET /stats - Retrieve dashboard metrics
 app.get("/stats", async (_req, res) => {
   try {
-    const [rows] = await pool.query(`
+    const [statsRows] = await pool.query(`
       SELECT 
         COUNT(CASE WHEN status != 'cancelled' THEN 1 END) as active_orders,
         SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END) as total_revenue,
@@ -329,11 +329,23 @@ app.get("/stats", async (_req, res) => {
       FROM orders
     `);
 
-    const stats = rows[0];
+    const [profitRows] = await pool.query(`
+      SELECT 
+        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as total_profit
+      FROM orders o
+      JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN menu_items m ON oi.item_name = m.name
+      WHERE o.status != 'cancelled'
+    `);
+
+    const stats = statsRows[0];
+    const profit = parseFloat(profitRows[0].total_profit || 0).toFixed(2);
+
     res.json({
       activeOrders: stats.active_orders || 0,
       totalRevenue: parseFloat(stats.total_revenue || 0).toFixed(2),
       cancelledOrders: stats.cancelled_orders || 0,
+      totalProfit: profit,
     });
   } catch (err) {
     console.error("Failed to fetch stats", err);
