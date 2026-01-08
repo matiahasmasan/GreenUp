@@ -48,7 +48,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      {/* 2x2 grid */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-8">
         {/* All orders except cancelled */}
         <MetricCard
           title="Active Orders"
@@ -76,9 +77,10 @@ export default function AdminDashboard() {
           color="text-green-600"
           bgColor="bg-green-50"
         />
+        {/* Total profit - hardcoded for now */}
         <MetricCard
           title="Total Profit"
-          value={`${stats.totalRevenue} RON`}
+          value={`100.00 RON`}
           subtitle="Total profit to date"
           icon="fas fa-piggy-bank"
           color="text-green-600"
