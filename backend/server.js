@@ -23,7 +23,7 @@ const pool = mysql.createPool({
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT name, description, price, image_url, category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC"
+      "SELECT name, description, price, image_url, cost_price,category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC"
     );
     res.json(rows);
   } catch (err) {

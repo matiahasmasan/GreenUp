@@ -38,7 +38,8 @@ export default function AdminDashboard() {
         </div>
 
         <div>
-          <p className="text-sm text-gray-500">Today</p>
+          {/* VEZI GPT */}
+          <p className="text-sm text-gray-500">TO CHANGE:Today</p>
           <p className="text-sm font-medium text-gray-700">
             {new Date().toLocaleDateString("ro-RO", {
               year: "numeric",

@@ -49,6 +49,19 @@ export default function ViewProductModal({
     }
   };
 
+  // Add this helper function in ViewProductModal.jsx
+  const calculateProfitMargin = (price, costPrice) => {
+    const priceNum = Number(price) || 0;
+    const costNum = Number(costPrice) || 0;
+
+    if (priceNum === 0) return { profit: 0, margin: 0 };
+
+    const profit = priceNum - costNum;
+    const margin = (profit / priceNum) * 100;
+
+    return { profit, margin };
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -88,6 +101,27 @@ export default function ViewProductModal({
               <p className="text-sm font-semibold text-gray-600 mb-1">Price</p>
               <p className="text-lg font-bold text-green-600">
                 {priceFormatter.format(Number(selectedProduct.price))}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-1">
+                Profit per Unit
+              </p>
+              <p className="text-lg font-bold text-green-400">
+                {priceFormatter.format(
+                  calculateProfitMargin(
+                    selectedProduct.price,
+                    selectedProduct.cost_price
+                  ).profit
+                )}
+                <span className="text-sm ml-1">
+                  (
+                  {calculateProfitMargin(
+                    selectedProduct.price,
+                    selectedProduct.cost_price
+                  ).margin.toFixed(2)}
+                  %)
+                </span>
               </p>
             </div>
             <div>
