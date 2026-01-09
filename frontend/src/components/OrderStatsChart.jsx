@@ -34,19 +34,13 @@ export default function OrderStatsChart() {
 
       const ctx = chartRef.current.getContext("2d");
 
-      // Generate colors for the chart
-      const colors = [
-        "#FF6384",
-        "#36A2EB",
-        "#FFCE56",
-        "#4BC0C0",
-        "#9966FF",
-        "#FF9F40",
-        "#FF6384",
-        "#C9CBCF",
-        "#4BC0C0",
-        "#FF6384",
-      ];
+      const generateGreenShades = (count) =>
+        Array.from({ length: count }, (_, i) => {
+          const lightness = 90 - i * (60 / count);
+          return `hsl(130, 45%, ${lightness}%)`;
+        });
+
+      const colors = generateGreenShades(10);
 
       chartInstance.current = new Chart(ctx, {
         type: "pie",
@@ -67,13 +61,7 @@ export default function OrderStatsChart() {
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: "right",
-              labels: {
-                padding: 15,
-                font: {
-                  size: 12,
-                },
-              },
+              display: false,
             },
             tooltip: {
               callbacks: {
@@ -127,40 +115,6 @@ export default function OrderStatsChart() {
         <div style={{ height: "400px", position: "relative" }}>
           <canvas ref={chartRef}></canvas>
         </div>
-      </div>
-
-      {/* Stats Table */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 border-b">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Item Name</th>
-              <th className="px-4 py-3 text-right font-semibold">
-                Quantity Sold
-              </th>
-              <th className="px-4 py-3 text-right font-semibold">
-                Times Ordered
-              </th>
-              <th className="px-4 py-3 text-right font-semibold">
-                Total Revenue
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {orderStats.map((item, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
-                <td className="px-4 py-3">{item.item_name}</td>
-                <td className="px-4 py-3 text-right font-medium">
-                  {item.total_quantity}
-                </td>
-                <td className="px-4 py-3 text-right">{item.order_count}</td>
-                <td className="px-4 py-3 text-right">
-                  {parseFloat(item.total_revenue).toFixed(2)} RON
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
       </div>
     </div>
   );
