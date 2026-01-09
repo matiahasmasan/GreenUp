@@ -12,6 +12,7 @@ export default function ViewProductModal({
   selectedProduct,
   loading,
   error,
+  isAdmin = false,
 }) {
   const getCategoryLabel = (categoryId) => {
     if (!categoryId) return "Uncategorized";
@@ -103,27 +104,29 @@ export default function ViewProductModal({
                 {priceFormatter.format(Number(selectedProduct.price))}
               </p>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-gray-600 mb-1">
-                Profit per Unit
-              </p>
-              <p className="text-lg font-bold text-green-400">
-                {priceFormatter.format(
-                  calculateProfitMargin(
-                    selectedProduct.price,
-                    selectedProduct.cost_price
-                  ).profit
-                )}
-                <span className="text-sm ml-1">
-                  (
-                  {calculateProfitMargin(
-                    selectedProduct.price,
-                    selectedProduct.cost_price
-                  ).margin.toFixed(2)}
-                  %)
-                </span>
-              </p>
-            </div>
+            {isAdmin && (
+              <div>
+                <p className="text-sm font-semibold text-gray-600 mb-1">
+                  Profit per Unit
+                </p>
+                <p className="text-lg font-bold text-green-400">
+                  {priceFormatter.format(
+                    calculateProfitMargin(
+                      selectedProduct.price,
+                      selectedProduct.cost_price
+                    ).profit
+                  )}
+                  <span className="text-sm ml-1">
+                    (
+                    {calculateProfitMargin(
+                      selectedProduct.price,
+                      selectedProduct.cost_price
+                    ).margin.toFixed(2)}
+                    %)
+                  </span>
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-sm font-semibold text-gray-600 mb-1">
                 Stock Status

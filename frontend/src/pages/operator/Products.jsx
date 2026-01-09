@@ -6,6 +6,7 @@ import EditProductModal from "../../components/EditProductModal";
 import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
 import CreateProductModal from "../../components/CreateProductModal";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 /* possible feature: automatic toggle of item stock based on availability but leave the manual toggle */
@@ -28,7 +29,10 @@ export default function OperatorProducts() {
   const [editLoading, setEditLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
-
+  // for profit features
+  // TO DO: add security to backend
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -317,6 +321,7 @@ export default function OperatorProducts() {
         selectedProduct={selectedProduct}
         loading={false}
         error={productError}
+        isAdmin={isAdmin}
       />
       {/* Edit Product Modal */}
       <EditProductModal

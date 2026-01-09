@@ -9,6 +9,7 @@ import RefreshButton from "../../components/RefreshButton";
 import NewOrderNotification from "../../components/NewOrderNotification";
 import { useOrderPolling } from "../../hooks/useOrderPolling";
 import { useOrderModal } from "../../hooks/useOrderModal";
+import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
@@ -18,6 +19,8 @@ export default function OperatorDashboard() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const ordersPerPage = 10;
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
 
   // hook for polling orders
   const {
@@ -180,6 +183,7 @@ export default function OperatorDashboard() {
         selectedOrder={selectedOrder}
         loading={orderLoading}
         error={orderError}
+        isAdmin={isAdmin}
       />
 
       <EditOrderModal

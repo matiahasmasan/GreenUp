@@ -10,6 +10,7 @@ export default function ViewOrderModal({
   selectedOrder,
   loading,
   error,
+  isAdmin = false,
 }) {
   const getStatusStyles = (status) => {
     const statusValue = status ? status.toLowerCase().trim() : "";
@@ -200,49 +201,51 @@ export default function ViewOrderModal({
           </div>
           {/* DOAR PENTRU ADMIN*/}
           {/* Profit Section */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            {profitLoading && (
-              <p className="text-gray-500 text-sm">Loading profit data...</p>
-            )}
-
-            {profitError && (
-              <p className="text-red-600 text-sm">{profitError}</p>
-            )}
-
-            {!profitLoading && !profitError && orderProfit !== null && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-1">
-                    Order Profit
-                  </p>
-                  <p className="text-2xl font-bold text-green-600">
-                    ${orderProfit.toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-600 mb-1">
-                    Profit Margin
-                  </p>
-                  <p className="text-2xl font-bold text-green-400">
-                    {calculateProfitMargin(
-                      orderProfit,
-                      selectedOrder.total_amount
-                    ).toFixed(2)}
-                    %
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {!profitLoading &&
-              !profitError &&
-              orderProfit === null &&
-              selectedOrder.status === "cancelled" && (
-                <p className="text-gray-500 text-sm">
-                  Profit data not available for cancelled orders
-                </p>
+          {isAdmin && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              {profitLoading && (
+                <p className="text-gray-500 text-sm">Loading profit data...</p>
               )}
-          </div>
+
+              {profitError && (
+                <p className="text-red-600 text-sm">{profitError}</p>
+              )}
+
+              {!profitLoading && !profitError && orderProfit !== null && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-1">
+                      Order Profit
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${orderProfit.toFixed(2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-600 mb-1">
+                      Profit Margin
+                    </p>
+                    <p className="text-2xl font-bold text-green-400">
+                      {calculateProfitMargin(
+                        orderProfit,
+                        selectedOrder.total_amount
+                      ).toFixed(2)}
+                      %
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {!profitLoading &&
+                !profitError &&
+                orderProfit === null &&
+                selectedOrder.status === "cancelled" && (
+                  <p className="text-gray-500 text-sm">
+                    Profit data not available for cancelled orders
+                  </p>
+                )}
+            </div>
+          )}
         </div>
       )}
     </Modal>
