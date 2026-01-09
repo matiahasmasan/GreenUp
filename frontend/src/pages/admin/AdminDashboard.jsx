@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MetricCard from "../../components/MetricCard";
+import OrderStatsChart from "../../components/OrderStatsChart";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -49,7 +50,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* 2x2 grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-6 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
         {/* All orders except cancelled */}
         <MetricCard
           title="Active Orders"
@@ -96,6 +97,7 @@ export default function AdminDashboard() {
         {/* Least ordered items */}
         {/* Low/No stock alerts */}
       </div>
+      <OrderStatsChart />
     </div>
   );
 }

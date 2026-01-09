@@ -10,7 +10,7 @@ export default function MetricCard({
   trend,
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200">
+    <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 hover:shadow-lg transition-shadow duration-200">
       <div className="flex flex-col gap-2">
         <div className="flex items-start justify-between">
           <div className={`${bgColor} p-2 sm:p-3 rounded-lg`}>

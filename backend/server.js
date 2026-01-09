@@ -385,6 +385,31 @@ app.get("/orders/:id/profit", async (req, res) => {
   }
 });
 
+// PIE CHART API
+
+// GET /orders/stats/items - most sold items
+app.get("/orders/stats/items", async (_req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        oi.item_name,
+        SUM(oi.quantity) as total_quantity,
+        COUNT(DISTINCT oi.order_id) as order_count,
+        SUM(oi.subtotal) as total_revenue
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status != 'cancelled'
+      GROUP BY oi.item_name
+      ORDER BY total_quantity DESC
+    `);
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch order stats", err);
+    res.status(500).json({ error: "Failed to fetch order statistics" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Backend listening on http://localhost:${PORT}`);
