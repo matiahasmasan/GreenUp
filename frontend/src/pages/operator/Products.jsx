@@ -8,7 +8,7 @@ import ProductFilters from "../../components/ProductFilters";
 import CreateProductModal from "../../components/CreateProductModal";
 import { useAuth } from "../../context/AuthContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const API_BASE_URL = "/api";
 /* possible feature: automatic toggle of item stock based on availability but leave the manual toggle */
 
 export default function OperatorProducts() {

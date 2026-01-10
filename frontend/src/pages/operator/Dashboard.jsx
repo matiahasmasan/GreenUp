@@ -11,7 +11,7 @@ import { useOrderPolling } from "../../hooks/useOrderPolling";
 import { useOrderModal } from "../../hooks/useOrderModal";
 import { useAuth } from "../../context/AuthContext";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
+const API_BASE_URL = "/api";
 
 export default function OperatorDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
