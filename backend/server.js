@@ -410,6 +410,53 @@ app.get("/orders/stats/items", async (_req, res) => {
   }
 });
 
+// GET /orders/stats/weekly-revenue - Get revenue for current week
+app.get("/orders/stats/weekly-revenue", async (_req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+        DAYNAME(created_at) as day_name,
+        DAYOFWEEK(created_at) as day_number,
+        DATE(created_at) as order_date,
+        SUM(total_amount) as daily_revenue
+      FROM orders
+      WHERE 
+        YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+        AND status != 'cancelled'
+      GROUP BY DATE(created_at), DAYNAME(created_at), DAYOFWEEK(created_at)
+      ORDER BY day_number
+    `);
+
+    // Create array with all days of the week initialized to 0
+    const daysOfWeek = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+    const weeklyData = daysOfWeek.map((day) => ({
+      day_name: day,
+      daily_revenue: 0,
+    }));
+
+    // Fill in actual revenue data
+    rows.forEach((row) => {
+      const dayIndex = daysOfWeek.indexOf(row.day_name);
+      if (dayIndex !== -1) {
+        weeklyData[dayIndex].daily_revenue = parseFloat(row.daily_revenue || 0);
+      }
+    });
+
+    res.json(weeklyData);
+  } catch (err) {
+    console.error("Failed to fetch weekly revenue", err);
+    res.status(500).json({ error: "Failed to fetch weekly revenue" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 // Adding "0.0.0.0" allows network access
 app.listen(PORT, "0.0.0.0", () => {

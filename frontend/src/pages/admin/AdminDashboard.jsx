@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import MetricCard from "../../components/MetricCard";
 import OrderStatsChart from "../../components/OrderStatsChart";
+import WeeklyRevenueChart from "../../components/WeeklyRevenueChart";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -98,6 +99,7 @@ export default function AdminDashboard() {
         {/* Least ordered items */}
         {/* Low/No stock alerts */}
       </div>
+      <WeeklyRevenueChart />
       <OrderStatsChart />
     </div>
   );

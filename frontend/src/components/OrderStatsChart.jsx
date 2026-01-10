@@ -113,8 +113,8 @@ export default function OrderStatsChart() {
       <h2 className="checkout-section-title mb-4">Most Sold Items</h2>
 
       {/* Chart Container */}
-      <div className="bg-white rounded-lg p-6 shadow-sm">
-        <div style={{ height: "400px", position: "relative" }}>
+      <div className="bg-white rounded-lg p-2 shadow-sm">
+        <div style={{ height: "320px", position: "relative" }}>
           <canvas ref={chartRef}></canvas>
         </div>
       </div>
