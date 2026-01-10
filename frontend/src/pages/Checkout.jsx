@@ -60,8 +60,7 @@ export default function Checkout({
     setIsProcessing(true);
 
     try {
-      const API_BASE_URL =
-        import.meta.env.VITE_API_URL || "http://localhost:4000";
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
       // Send order to backend
       const response = await fetch(`${API_BASE_URL}/orders`, {
