@@ -10,9 +10,7 @@ export default function OrderStatsChart() {
   useEffect(() => {
     const fetchOrderStats = async () => {
       try {
-        const response = await fetch(
-          "http://localhost:4000/orders/stats/items"
-        );
+        const response = await fetch("/api/orders/stats/items");
         const data = await response.json();
         setOrderStats(data);
       } catch (error) {

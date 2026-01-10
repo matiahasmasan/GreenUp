@@ -2,7 +2,7 @@ import Modal from "./common/Modal";
 import { formatDate } from "../utils/dateFormatter";
 import { useState, useEffect } from "react";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 
 export default function ViewOrderModal({
   isOpen,
