@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
 
-export default function OrderStatsChart() {
+export default function OrderStatsChart({ fromDate, toDate }) {
   const [orderStats, setOrderStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
@@ -10,9 +10,23 @@ export default function OrderStatsChart() {
   useEffect(() => {
     const fetchOrderStats = async () => {
       try {
-        const response = await fetch("/api/orders/stats/items");
+        setLoading(true);
+
+        // Build query params
+        const params = new URLSearchParams();
+        if (fromDate) params.append("fromDate", fromDate);
+        if (toDate) params.append("toDate", toDate);
+
+        const queryString = params.toString();
+        const url = queryString
+          ? `/api/orders/stats/items?${queryString}`
+          : "/api/orders/stats/items";
+
+        const response = await fetch(url);
         const data = await response.json();
-        setOrderStats(data);
+
+        // Take top 10 items
+        setOrderStats(data.slice(0, 10));
       } catch (error) {
         console.error("Error fetching order stats:", error);
       } finally {
@@ -21,7 +35,7 @@ export default function OrderStatsChart() {
     };
 
     fetchOrderStats();
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     if (orderStats.length > 0 && chartRef.current) {
@@ -100,9 +114,9 @@ export default function OrderStatsChart() {
   if (orderStats.length === 0) {
     return (
       <div className="checkout-section mt-4">
-        <h2 className="checkout-section-title mb-4">Order Statistics</h2>
+        <h2 className="checkout-section-title mb-4">Most Sold Items</h2>
         <div className="p-6 text-center text-gray-500">
-          No order data available yet
+          No order data available for the selected period
         </div>
       </div>
     );
