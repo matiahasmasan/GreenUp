@@ -1,7 +1,8 @@
+// WeeklyRevenueChart.jsx - Updated with Chart.js and date filtering
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
 
-export default function WeeklyRevenueChart() {
+export default function WeeklyRevenueChart({ fromDate, toDate }) {
   const [weeklyData, setWeeklyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
@@ -10,7 +11,19 @@ export default function WeeklyRevenueChart() {
   useEffect(() => {
     const fetchWeeklyRevenue = async () => {
       try {
-        const response = await fetch("/api/orders/stats/weekly-revenue");
+        setLoading(true);
+
+        // Build query params
+        const params = new URLSearchParams();
+        if (fromDate) params.append("fromDate", fromDate);
+        if (toDate) params.append("toDate", toDate);
+
+        const queryString = params.toString();
+        const url = queryString
+          ? `/api/orders/stats/weekly-revenue?${queryString}`
+          : "/api/orders/stats/weekly-revenue";
+
+        const response = await fetch(url);
         const data = await response.json();
         setWeeklyData(data);
       } catch (error) {
@@ -21,7 +34,7 @@ export default function WeeklyRevenueChart() {
     };
 
     fetchWeeklyRevenue();
-  }, []);
+  }, [fromDate, toDate]);
 
   useEffect(() => {
     if (weeklyData.length > 0 && chartRef.current) {
@@ -79,7 +92,7 @@ export default function WeeklyRevenueChart() {
               callbacks: {
                 label: function (context) {
                   const value = context.parsed.y;
-                  return `Revenue: $${value.toFixed(2)}`;
+                  return `Revenue: ${value.toFixed(2)} RON`;
                 },
               },
             },
@@ -89,7 +102,7 @@ export default function WeeklyRevenueChart() {
               beginAtZero: true,
               ticks: {
                 callback: function (value) {
-                  return "$" + value.toFixed(0);
+                  return value.toFixed(0) + " RON";
                 },
                 color: "#6B7280",
                 font: {
@@ -135,15 +148,17 @@ export default function WeeklyRevenueChart() {
   if (weeklyData.length === 0) {
     return (
       <div className="checkout-section mt-4">
-        <h2 className="checkout-section-title mb-4">Weekly Revenue</h2>
+        <h2 className="checkout-section-title mb-4">
+          {fromDate || toDate ? "Revenue by Day" : "Weekly Revenue"}
+        </h2>
         <div className="p-6 text-center text-gray-500">
-          No revenue data available yet
+          No revenue data available for the selected period
         </div>
       </div>
     );
   }
 
-  // Calculate total weekly revenue
+  // Calculate total revenue for the period
   const totalRevenue = weeklyData.reduce(
     (sum, day) => sum + parseFloat(day.daily_revenue),
     0
@@ -152,11 +167,13 @@ export default function WeeklyRevenueChart() {
   return (
     <div className="checkout-section mt-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="checkout-section-title">Weekly Revenue</h2>
+        <h2 className="checkout-section-title">
+          {fromDate || toDate ? "Revenue by Day" : "Weekly Revenue"}
+        </h2>
         <div className="text-sm text-gray-600">
           Total:{" "}
           <span className="font-semibold text-green-600">
-            ${totalRevenue.toFixed(2)}
+            {totalRevenue.toFixed(2)} RON
           </span>
         </div>
       </div>
@@ -170,3 +187,6 @@ export default function WeeklyRevenueChart() {
     </div>
   );
 }
+
+// OrderStatsChart.jsx - Keep your existing implementation or update similarly
+// If you need this component updated, please share the current code
