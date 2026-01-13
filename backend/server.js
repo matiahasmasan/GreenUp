@@ -319,24 +319,47 @@ app.post("/menu-items", async (req, res) => {
 
 // admin cards
 // GET /stats - Retrieve dashboard metrics
-app.get("/stats", async (_req, res) => {
+app.get("/stats", async (req, res) => {
+  const { fromDate, toDate } = req.query;
+
   try {
-    const [statsRows] = await pool.query(`
+    let dateCondition = "";
+    const params = [];
+
+    if (fromDate && toDate) {
+      dateCondition = "AND DATE(created_at) BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else if (fromDate) {
+      dateCondition = "AND DATE(created_at) >= ?";
+      params.push(fromDate);
+    } else if (toDate) {
+      dateCondition = "AND DATE(created_at) <= ?";
+      params.push(toDate);
+    }
+
+    const [statsRows] = await pool.query(
+      `
       SELECT 
         COUNT(CASE WHEN status != 'cancelled' THEN 1 END) as active_orders,
         SUM(CASE WHEN status != 'cancelled' THEN total_amount ELSE 0 END) as total_revenue,
         COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled_orders
       FROM orders
-    `);
+      WHERE 1=1 ${dateCondition}
+    `,
+      params
+    );
 
-    const [profitRows] = await pool.query(`
+    const [profitRows] = await pool.query(
+      `
       SELECT 
         SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as total_profit
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items m ON oi.item_name = m.name
       WHERE o.status != 'cancelled'
-    `);
+    ` + (dateCondition ? ` AND DATE(o.created_at) BETWEEN ? AND ?` : ""),
+      dateCondition ? [fromDate, toDate] : []
+    );
 
     const stats = statsRows[0];
     const profit = parseFloat(profitRows[0].total_profit || 0).toFixed(2);
@@ -388,9 +411,26 @@ app.get("/orders/:id/profit", async (req, res) => {
 // PIE CHART API
 
 // GET /orders/stats/items - most sold items
-app.get("/orders/stats/items", async (_req, res) => {
+app.get("/orders/stats/items", async (req, res) => {
+  const { fromDate, toDate } = req.query;
+
   try {
-    const [rows] = await pool.query(`
+    let dateCondition = "";
+    const params = [];
+
+    if (fromDate && toDate) {
+      dateCondition = "AND DATE(o.created_at) BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else if (fromDate) {
+      dateCondition = "AND DATE(o.created_at) >= ?";
+      params.push(fromDate);
+    } else if (toDate) {
+      dateCondition = "AND DATE(o.created_at) <= ?";
+      params.push(toDate);
+    }
+
+    const [rows] = await pool.query(
+      `
       SELECT 
         oi.item_name,
         SUM(oi.quantity) as total_quantity,
@@ -398,10 +438,12 @@ app.get("/orders/stats/items", async (_req, res) => {
         SUM(oi.subtotal) as total_revenue
       FROM order_items oi
       JOIN orders o ON oi.order_id = o.id
-      WHERE o.status != 'cancelled'
+      WHERE o.status != 'cancelled' ${dateCondition}
       GROUP BY oi.item_name
       ORDER BY total_quantity DESC
-    `);
+    `,
+      params
+    );
 
     res.json(rows);
   } catch (err) {
@@ -411,21 +453,41 @@ app.get("/orders/stats/items", async (_req, res) => {
 });
 
 // GET /orders/stats/weekly-revenue - Get revenue for current week
-app.get("/orders/stats/weekly-revenue", async (_req, res) => {
+app.get("/orders/stats/weekly-revenue", async (req, res) => {
+  const { fromDate, toDate } = req.query;
+
   try {
-    const [rows] = await pool.query(`
+    let dateCondition = "";
+    const params = [];
+
+    // If no dates provided, default to current week
+    if (!fromDate && !toDate) {
+      dateCondition = "AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)";
+    } else if (fromDate && toDate) {
+      dateCondition = "AND DATE(created_at) BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else if (fromDate) {
+      dateCondition = "AND DATE(created_at) >= ?";
+      params.push(fromDate);
+    } else if (toDate) {
+      dateCondition = "AND DATE(created_at) <= ?";
+      params.push(toDate);
+    }
+
+    const [rows] = await pool.query(
+      `
       SELECT 
         DAYNAME(created_at) as day_name,
         DAYOFWEEK(created_at) as day_number,
         DATE(created_at) as order_date,
         SUM(total_amount) as daily_revenue
       FROM orders
-      WHERE 
-        YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
-        AND status != 'cancelled'
+      WHERE status != 'cancelled' ${dateCondition}
       GROUP BY DATE(created_at), DAYNAME(created_at), DAYOFWEEK(created_at)
-      ORDER BY day_number
-    `);
+      ORDER BY order_date
+    `,
+      params
+    );
 
     // Create array with all days of the week initialized to 0
     const daysOfWeek = [

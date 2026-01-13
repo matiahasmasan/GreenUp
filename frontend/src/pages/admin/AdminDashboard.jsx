@@ -2,19 +2,34 @@ import React, { useState, useEffect } from "react";
 import MetricCard from "../../components/MetricCard";
 import OrderStatsChart from "../../components/OrderStatsChart";
 import WeeklyRevenueChart from "../../components/WeeklyRevenueChart";
+import OrderFilters from "../../components/OrderFilters";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     activeOrders: 0,
     totalRevenue: "0.00",
     cancelledOrders: 0,
+    totalProfit: "0.00",
   });
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch("api/stats");
+        setLoading(true);
+
+        // Build query params
+        const params = new URLSearchParams();
+        if (fromDate) params.append("fromDate", fromDate);
+        if (toDate) params.append("toDate", toDate);
+
+        const queryString = params.toString();
+        const url = queryString ? `api/stats?${queryString}` : "api/stats";
+
+        const response = await fetch(url);
         const data = await response.json();
         setStats(data);
       } catch (error) {
@@ -25,7 +40,21 @@ export default function AdminDashboard() {
     };
 
     fetchStats();
-  }, []);
+  }, [fromDate, toDate]);
+
+  // Helper to get date range display text
+  const getDateRangeText = () => {
+    if (fromDate && toDate) {
+      return `${new Date(fromDate).toLocaleDateString("ro-RO")} - ${new Date(
+        toDate
+      ).toLocaleDateString("ro-RO")}`;
+    } else if (fromDate) {
+      return `From ${new Date(fromDate).toLocaleDateString("ro-RO")}`;
+    } else if (toDate) {
+      return `Until ${new Date(toDate).toLocaleDateString("ro-RO")}`;
+    }
+    return "All Time";
+  };
 
   if (loading) {
     return <div className="p-6">Loading dashboard...</div>;
@@ -39,20 +68,25 @@ export default function AdminDashboard() {
         </div>
 
         <div>
-          {/* VEZI GPT */}
-          <p className="text-sm text-gray-500">TO CHANGE:Today</p>
+          <p className="text-sm text-gray-500">Period</p>
           <p className="text-sm font-medium text-gray-700">
-            {new Date().toLocaleDateString("ro-RO", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
+            {getDateRangeText()}
           </p>
         </div>
       </div>
 
+      {/* Date Filters */}
+      <OrderFilters
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        fromDate={fromDate}
+        onFromDateChange={setFromDate}
+        toDate={toDate}
+        onToDateChange={setToDate}
+      />
+
       {/* 2x2 grid */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 mt-6">
         {/* All orders except cancelled */}
         <MetricCard
           title="Active Orders"
@@ -77,30 +111,26 @@ export default function AdminDashboard() {
         <MetricCard
           title="Cancelled Orders"
           value={stats.cancelledOrders}
-          subtitle="Total orders cancelled to date"
+          subtitle="Total orders cancelled"
           icon="fas fa-times-circle"
           color="text-green-600"
           bgColor="bg-green-50"
           trend={{ positive: false, value: "-12%" }}
         />
-        {/* Total profit - hardcoded for now */}
+        {/* Total profit */}
         <MetricCard
           title="Total Profit"
           value={`${stats.totalProfit} RON`}
-          subtitle="Total profit to date"
+          subtitle="Total profit"
           icon="fas fa-piggy-bank"
           color="text-green-600"
           bgColor="bg-green-50"
           trend={{ positive: true, value: "+12%" }}
         />
-        {/* TO DO */}
-        {/* Busiest hours */}
-        {/* Top-selling dishes today / week */}
-        {/* Least ordered items */}
-        {/* Low/No stock alerts */}
       </div>
-      <WeeklyRevenueChart />
-      <OrderStatsChart />
+
+      <WeeklyRevenueChart fromDate={fromDate} toDate={toDate} />
+      <OrderStatsChart fromDate={fromDate} toDate={toDate} />
     </div>
   );
 }
