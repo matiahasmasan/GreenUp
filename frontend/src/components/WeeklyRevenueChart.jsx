@@ -1,15 +1,14 @@
-// WeeklyRevenueChart.jsx - Updated with Chart.js and date filtering
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
 
 export default function WeeklyRevenueChart({ fromDate, toDate }) {
-  const [weeklyData, setWeeklyData] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
 
   useEffect(() => {
-    const fetchWeeklyRevenue = async () => {
+    const fetchDailyRevenue = async () => {
       try {
         setLoading(true);
 
@@ -20,24 +19,24 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
 
         const queryString = params.toString();
         const url = queryString
-          ? `/api/orders/stats/weekly-revenue?${queryString}`
-          : "/api/orders/stats/weekly-revenue";
+          ? `/api/orders/stats/daily-revenue?${queryString}`
+          : "/api/orders/stats/daily-revenue";
 
         const response = await fetch(url);
         const data = await response.json();
-        setWeeklyData(data);
+        setDailyData(data);
       } catch (error) {
-        console.error("Error fetching weekly revenue:", error);
+        console.error("Error fetching daily revenue:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchWeeklyRevenue();
+    fetchDailyRevenue();
   }, [fromDate, toDate]);
 
   useEffect(() => {
-    if (weeklyData.length > 0 && chartRef.current) {
+    if (dailyData.length > 0 && chartRef.current) {
       // Destroy previous chart instance if it exists
       if (chartInstance.current) {
         chartInstance.current.destroy();
@@ -45,14 +44,24 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
 
       const ctx = chartRef.current.getContext("2d");
 
+      // Format labels to show date + day name
+      const labels = dailyData.map((item) => {
+        const date = new Date(item.order_date);
+        const formattedDate = date.toLocaleDateString("ro-RO", {
+          day: "2-digit",
+          month: "2-digit",
+        });
+        return `${formattedDate} (${item.day_name})`;
+      });
+
       chartInstance.current = new Chart(ctx, {
         type: "line",
         data: {
-          labels: weeklyData.map((item) => item.day_name),
+          labels: labels,
           datasets: [
             {
               label: "Daily Revenue",
-              data: weeklyData.map((item) => item.daily_revenue),
+              data: dailyData.map((item) => item.daily_revenue),
               borderColor: "rgb(34, 197, 94)",
               backgroundColor: "rgba(34, 197, 94, 0.1)",
               borderWidth: 3,
@@ -117,8 +126,10 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
               ticks: {
                 color: "#6B7280",
                 font: {
-                  size: 12,
+                  size: 11,
                 },
+                maxRotation: 45,
+                minRotation: 45,
               },
               grid: {
                 display: false,
@@ -135,7 +146,7 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
         chartInstance.current.destroy();
       }
     };
-  }, [weeklyData]);
+  }, [dailyData]);
 
   if (loading) {
     return (
@@ -145,12 +156,10 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
     );
   }
 
-  if (weeklyData.length === 0) {
+  if (dailyData.length === 0) {
     return (
       <div className="checkout-section mt-4">
-        <h2 className="checkout-section-title mb-4">
-          {fromDate || toDate ? "Revenue by Day" : "Weekly Revenue"}
-        </h2>
+        <h2 className="checkout-section-title mb-4">Daily Revenue</h2>
         <div className="p-6 text-center text-gray-500">
           No revenue data available for the selected period
         </div>
@@ -159,22 +168,40 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
   }
 
   // Calculate total revenue for the period
-  const totalRevenue = weeklyData.reduce(
+  const totalRevenue = dailyData.reduce(
     (sum, day) => sum + parseFloat(day.daily_revenue),
     0
   );
 
+  // Get period description
+  const getPeriodText = () => {
+    if (fromDate && toDate) {
+      return `${new Date(fromDate).toLocaleDateString("ro-RO")} - ${new Date(
+        toDate
+      ).toLocaleDateString("ro-RO")}`;
+    } else if (fromDate) {
+      return `From ${new Date(fromDate).toLocaleDateString("ro-RO")}`;
+    } else if (toDate) {
+      return `Until ${new Date(toDate).toLocaleDateString("ro-RO")}`;
+    }
+    return "All Time";
+  };
+
   return (
     <div className="checkout-section mt-4">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="checkout-section-title">
-          {fromDate || toDate ? "Revenue by Day" : "Weekly Revenue"}
-        </h2>
-        <div className="text-sm text-gray-600">
-          Total:{" "}
-          <span className="font-semibold text-green-600">
+        <div>
+          <h2 className="checkout-section-title">Daily Revenue</h2>
+          <p className="text-sm text-gray-500 mt-1">{getPeriodText()}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Total Revenue</div>
+          <div className="text-lg font-semibold text-green-600">
             {totalRevenue.toFixed(2)} RON
-          </span>
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {dailyData.length} day{dailyData.length !== 1 ? "s" : ""}
+          </div>
         </div>
       </div>
 
@@ -187,6 +214,3 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
     </div>
   );
 }
-
-// OrderStatsChart.jsx - Keep your existing implementation or update similarly
-// If you need this component updated, please share the current code
