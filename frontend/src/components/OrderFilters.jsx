@@ -7,18 +7,21 @@ export default function OrderFilters({
   onFromDateChange,
   toDate,
   onToDateChange,
+  showSearch = true, // Default to true for backward compatibility
 }) {
   return (
     <div className="mt-4 space-y-3">
-      <div>
-        {/* Searchbar */}
-        <SearchBar
-          variant="simple"
-          placeholder="Search order..."
-          value={searchTerm}
-          onChange={onSearchChange}
-        />
-      </div>
+      {showSearch && (
+        <div>
+          {/* Searchbar */}
+          <SearchBar
+            variant="simple"
+            placeholder="Search order..."
+            value={searchTerm}
+            onChange={onSearchChange}
+          />
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-3 flex-wrap items-center">

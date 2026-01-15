@@ -83,6 +83,7 @@ export default function AdminDashboard() {
         onFromDateChange={setFromDate}
         toDate={toDate}
         onToDateChange={setToDate}
+        showSearch={false} // Add this prop
       />
 
       {/* 2x2 grid */}
