@@ -519,6 +519,49 @@ app.get("/orders/stats/weekly-revenue", async (req, res) => {
   }
 });
 
+// Replace the GET /orders/stats/weekly-revenue endpoint with this:
+
+// GET /orders/stats/daily-revenue - Get revenue by day for selected period
+app.get("/orders/stats/daily-revenue", async (req, res) => {
+  const { fromDate, toDate } = req.query;
+
+  try {
+    let dateCondition = "";
+    const params = [];
+
+    if (fromDate && toDate) {
+      dateCondition = "AND DATE(created_at) BETWEEN ? AND ?";
+      params.push(fromDate, toDate);
+    } else if (fromDate) {
+      dateCondition = "AND DATE(created_at) >= ?";
+      params.push(fromDate);
+    } else if (toDate) {
+      dateCondition = "AND DATE(created_at) <= ?";
+      params.push(toDate);
+    }
+    // If no dates provided, get all time data
+
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        DATE(created_at) as order_date,
+        DAYNAME(created_at) as day_name,
+        SUM(total_amount) as daily_revenue
+      FROM orders
+      WHERE status != 'cancelled' ${dateCondition}
+      GROUP BY DATE(created_at), DAYNAME(created_at)
+      ORDER BY order_date ASC
+    `,
+      params
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch daily revenue", err);
+    res.status(500).json({ error: "Failed to fetch daily revenue" });
+  }
+});
+
 const PORT = process.env.PORT || 4000;
 // Adding "0.0.0.0" allows network access
 app.listen(PORT, "0.0.0.0", () => {
