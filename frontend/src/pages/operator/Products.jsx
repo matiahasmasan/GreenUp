@@ -30,9 +30,9 @@ export default function OperatorProducts() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   // for profit features
-  // TO DO: add security to backend
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -127,6 +127,7 @@ export default function OperatorProducts() {
           name: formData.name,
           description: formData.description,
           price: Number(formData.price),
+          cost_price: Number(formData.cost_price),
           image_url: formData.image_url,
           category_id: Number(formData.category_id),
           is_available: formData.is_available,
@@ -199,15 +200,18 @@ export default function OperatorProducts() {
     <div className="checkout-section mt-2">
       <div className="flex justify-between items-center mb-2">
         <h1 className="checkout-section-title">Products</h1>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            title="Add Product"
-          >
-            <i className="fas fa-plus"></i>
-          </button>
-        </div>
+        {/* Only show Add Product button for admins */}
+        {isAdmin && (
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setCreateModalOpen(true)}
+              className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              title="Add Product"
+            >
+              <i className="fas fa-plus"></i>
+            </button>
+          </div>
+        )}
       </div>
       {/* Filters */}
       <ProductFilters
