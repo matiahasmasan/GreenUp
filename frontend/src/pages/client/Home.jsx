@@ -4,7 +4,7 @@ import MenuSection from "../../components/MenuSection";
 import SearchBar from "../../components/SearchBar";
 import CategoryTabs, { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
 
-const API_BASE_URL = "http://192.168.1.141:4000";
+const API_BASE_URL = "/api";
 
 export default function ClientHome({ onNavigate, onAddToCart }) {
   const [menuItems, setMenuItems] = useState([]);

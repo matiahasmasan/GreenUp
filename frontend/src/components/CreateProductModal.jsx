@@ -13,6 +13,7 @@ export default function CreateProductModal({
     name: "",
     description: "",
     price: "",
+    cost_price: "",
     image_url: "",
     category_id: "",
     is_available: true,
@@ -52,6 +53,18 @@ export default function CreateProductModal({
       errors.price = "Please enter a valid price greater than 0";
     }
 
+    if (
+      !formData.cost_price ||
+      isNaN(formData.cost_price) ||
+      Number(formData.cost_price) < 0
+    ) {
+      errors.cost_price = "Please enter a valid cost price (0 or greater)";
+    }
+
+    if (Number(formData.cost_price) > Number(formData.price)) {
+      errors.cost_price = "Cost price cannot be greater than selling price";
+    }
+
     if (!formData.category_id) {
       errors.category_id = "Please select a category";
     }
@@ -79,6 +92,7 @@ export default function CreateProductModal({
       name: "",
       description: "",
       price: "",
+      cost_price: "",
       image_url: "",
       category_id: "",
       is_available: true,
@@ -87,6 +101,20 @@ export default function CreateProductModal({
     setFormErrors({});
     onClose();
   };
+
+  // Calculate profit margin
+  const calculateProfitMargin = () => {
+    const price = Number(formData.price);
+    const cost = Number(formData.cost_price);
+    if (price > 0 && cost >= 0) {
+      const profit = price - cost;
+      const margin = ((profit / price) * 100).toFixed(2);
+      return { profit: profit.toFixed(2), margin };
+    }
+    return { profit: "0.00", margin: "0.00" };
+  };
+
+  const { profit, margin } = calculateProfitMargin();
 
   return (
     <Modal
@@ -165,28 +193,76 @@ export default function CreateProductModal({
           )}
         </div>
 
-        {/* Price */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Price <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="number"
-            name="price"
-            value={formData.price}
-            onChange={handleChange}
-            step="0.01"
-            min="0"
-            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
-              formErrors.price ? "border-red-500" : "border-gray-300"
-            }`}
-            placeholder="0.00"
-            disabled={loading}
-          />
-          {formErrors.price && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>
-          )}
+        {/* Price and Cost Price in a row */}
+        <div className="grid grid-cols-2 gap-4">
+          {/* Selling Price */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Selling Price <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="price"
+              value={formData.price}
+              onChange={handleChange}
+              step="0.01"
+              min="0"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                formErrors.price ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="0.00"
+              disabled={loading}
+            />
+            {formErrors.price && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>
+            )}
+          </div>
+
+          {/* Cost Price */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              Cost Price <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="cost_price"
+              value={formData.cost_price}
+              onChange={handleChange}
+              step="0.01"
+              min="0"
+              className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                formErrors.cost_price ? "border-red-500" : "border-gray-300"
+              }`}
+              placeholder="0.00"
+              disabled={loading}
+            />
+            {formErrors.cost_price && (
+              <p className="text-red-500 text-sm mt-1">
+                {formErrors.cost_price}
+              </p>
+            )}
+          </div>
         </div>
+
+        {/* Profit Margin Display */}
+        {formData.price && formData.cost_price && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Profit per unit:
+                </p>
+                <p className="text-lg font-bold text-green-600">${profit}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold text-gray-700">
+                  Profit Margin:
+                </p>
+                <p className="text-lg font-bold text-blue-600">{margin}%</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Stock Quantity */}
         <div>
