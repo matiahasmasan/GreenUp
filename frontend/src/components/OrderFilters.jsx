@@ -1,3 +1,4 @@
+import { Calendar } from "lucide-react";
 import SearchBar from "./SearchBar";
 
 export default function OrderFilters({
@@ -10,7 +11,7 @@ export default function OrderFilters({
   showSearch = true, // Default to true for backward compatibility
 }) {
   return (
-    <div className="mt-4 space-y-3">
+    <div className="mt-4 space-y-4">
       {showSearch && (
         <div>
           {/* Searchbar */}
@@ -24,26 +25,36 @@ export default function OrderFilters({
       )}
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap items-center">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-end">
         {/* Date range filter */}
-        <div className="flex gap-2 flex-wrap items-center">
-          <div className="flex flex-col">
-            <label className="text-xs text-gray-600 mb-1">From date</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => onFromDateChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-            />
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 flex-1">
+          <div className="flex flex-col flex-1">
+            <label className="text-xs font-medium text-gray-600 mb-2">
+              From date
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => onFromDateChange(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors appearance-none"
+              />
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
-          <div className="flex flex-col">
-            <label className="text-xs text-gray-600 mb-1">To date</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => onToDateChange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
-            />
+          <div className="flex flex-col flex-1">
+            <label className="text-xs font-medium text-gray-600 mb-2">
+              To date
+            </label>
+            <div className="relative">
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => onToDateChange(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors appearance-none"
+              />
+              <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
