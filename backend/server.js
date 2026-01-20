@@ -23,7 +23,7 @@ const pool = mysql.createPool({
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT name, description, price, image_url, cost_price,category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC"
+      "SELECT name, description, price, image_url, cost_price,category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC",
     );
     res.json(rows);
   } catch (err) {
@@ -45,7 +45,7 @@ app.patch("/menu-items/availability", async (req, res) => {
   try {
     const [result] = await pool.query(
       "UPDATE menu_items SET is_available = ? WHERE name = ?",
-      [is_available ? 1 : 0, name]
+      [is_available ? 1 : 0, name],
     );
 
     if (result.affectedRows === 0) {
@@ -55,6 +55,39 @@ app.patch("/menu-items/availability", async (req, res) => {
     res.json({ success: true, message: "Availability updated" });
   } catch (err) {
     console.error("Failed to update availability", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// PATCH /menu-items/stock - Update product stock
+app.patch("/menu-items/stock", async (req, res) => {
+  const { name, stocks } = req.body;
+
+  if (name === undefined || stocks === undefined) {
+    return res.status(400).json({ error: "Missing name or stocks" });
+  }
+
+  if (isNaN(stocks) || Number(stocks) < 0) {
+    return res
+      .status(400)
+      .json({
+        error: "Stocks must be a valid number greater than or equal to 0",
+      });
+  }
+
+  try {
+    const [result] = await pool.query(
+      "UPDATE menu_items SET stocks = ? WHERE name = ?",
+      [Number(stocks), name],
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ success: true, message: "Stock updated successfully" });
+  } catch (err) {
+    console.error("Failed to update stock", err);
     res.status(500).json({ error: "Server error" });
   }
 });
@@ -84,17 +117,23 @@ app.post("/orders", async (req, res) => {
     // Insert order with default status 'pending'
     const [orderResult] = await conn.query(
       "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status) VALUES (?, ?, ?, ?, ?)",
-      [customerName, table, paymentMethod, total || 0, "pending"]
+      [customerName, table, paymentMethod, total || 0, "pending"],
     );
 
     const orderId = orderResult.insertId;
 
-    // Insert order items
+    // Insert order items and update stock
     for (const item of items) {
       const subtotal = Number(item.price) * item.quantity;
       await conn.query(
         "INSERT INTO order_items (order_id, item_name, item_price, quantity, subtotal) VALUES (?, ?, ?, ?, ?)",
-        [orderId, item.name, item.price, item.quantity, subtotal]
+        [orderId, item.name, item.price, item.quantity, subtotal],
+      );
+
+      // Decrement stock for the ordered item
+      await conn.query(
+        "UPDATE menu_items SET stocks = stocks - ? WHERE name = ? AND stocks >= ?",
+        [item.quantity, item.name, item.quantity],
       );
     }
 
@@ -128,7 +167,7 @@ app.get("/orders/:id", async (req, res) => {
       `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
        FROM orders 
        WHERE id = ?`,
-      [orderId]
+      [orderId],
     );
 
     if (orders.length === 0) {
@@ -143,7 +182,7 @@ app.get("/orders/:id", async (req, res) => {
        FROM order_items 
        WHERE order_id = ?
        ORDER BY id`,
-      [orderId]
+      [orderId],
     );
 
     // Format items
@@ -187,7 +226,7 @@ app.patch("/orders/:id/status", async (req, res) => {
   try {
     const [result] = await pool.query(
       "UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?",
-      [status, orderId]
+      [status, orderId],
     );
 
     if (result.affectedRows === 0) {
@@ -213,14 +252,14 @@ app.get("/history", async (_req, res) => {
     const [orders] = await pool.query(
       `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
        FROM orders 
-       ORDER BY created_at DESC`
+       ORDER BY created_at DESC`,
     );
 
     // Fetch all order items
     const [orderItems] = await pool.query(
       `SELECT order_id, item_name, item_price, quantity, subtotal 
        FROM order_items 
-       ORDER BY order_id, id`
+       ORDER BY order_id, id`,
     );
 
     // Group items by order_id
@@ -295,7 +334,7 @@ app.post("/menu-items", async (req, res) => {
         Number(category_id),
         is_available ? 1 : 0,
         Number(stocks),
-      ]
+      ],
     );
 
     res.status(201).json({
@@ -346,7 +385,7 @@ app.get("/stats", async (req, res) => {
       FROM orders
       WHERE 1=1 ${dateCondition}
     `,
-      params
+      params,
     );
 
     const [profitRows] = await pool.query(
@@ -358,7 +397,7 @@ app.get("/stats", async (req, res) => {
       LEFT JOIN menu_items m ON oi.item_name = m.name
       WHERE o.status != 'cancelled'
     ` + (dateCondition ? ` AND DATE(o.created_at) BETWEEN ? AND ?` : ""),
-      dateCondition ? [fromDate, toDate] : []
+      dateCondition ? [fromDate, toDate] : [],
     );
 
     const stats = statsRows[0];
@@ -393,7 +432,7 @@ app.get("/orders/:id/profit", async (req, res) => {
       LEFT JOIN menu_items m ON oi.item_name = m.name
       WHERE o.id = ? AND o.status != 'cancelled'
       GROUP BY o.id`,
-      [orderId]
+      [orderId],
     );
 
     if (result.length === 0) {
@@ -442,7 +481,7 @@ app.get("/orders/stats/items", async (req, res) => {
       GROUP BY oi.item_name
       ORDER BY total_quantity DESC
     `,
-      params
+      params,
     );
 
     res.json(rows);
@@ -483,7 +522,7 @@ app.get("/orders/stats/daily-revenue", async (req, res) => {
       GROUP BY DATE(created_at), DAYNAME(created_at)
       ORDER BY order_date ASC
     `,
-      params
+      params,
     );
 
     res.json(rows);
