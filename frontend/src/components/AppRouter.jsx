@@ -8,6 +8,7 @@ import OperatorDashboard from "../pages/operator/Dashboard";
 import OperatorProducts from "../pages/operator/Products";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import NotFound from "../pages/NotFound";
+import { useAuth } from "../context/AuthContext";
 
 export default function AppRouter({
   route,
@@ -20,6 +21,24 @@ export default function AppRouter({
   onSetLastOrder,
   onClearCart,
 }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  // Guard: must be logged in, optionally with one of the allowed roles.
+  // If not authenticated → show login.
+  // If authenticated but wrong role → redirect to their own dashboard.
+  const guard = (element, allowedRoles) => {
+    if (!user) return <AdminLogin onNavigate={onNavigate} />;
+    if (!allowedRoles.includes(user.role)) {
+      if (user.role === "operator") {
+        return <OperatorDashboard onNavigate={onNavigate} />;
+      }
+      return <NotFound onNavigate={onNavigate} />;
+    }
+    return element;
+  };
+
   if (route === "home") {
     return <ClientHome onNavigate={onNavigate} onAddToCart={onAddToCart} />;
   }
@@ -55,15 +74,15 @@ export default function AppRouter({
   }
 
   if (route === "admin-dashboard") {
-    return <AdminDashboard onNavigate={onNavigate} />;
+    return guard(<AdminDashboard onNavigate={onNavigate} />, ["admin"]);
   }
 
   if (route === "operator-dashboard") {
-    return <OperatorDashboard onNavigate={onNavigate} />;
+    return guard(<OperatorDashboard onNavigate={onNavigate} />, ["operator", "admin"]);
   }
 
   if (route === "products") {
-    return <OperatorProducts onNavigate={onNavigate} />;
+    return guard(<OperatorProducts onNavigate={onNavigate} />, ["operator", "admin"]);
   }
 
   // 404 Not Found

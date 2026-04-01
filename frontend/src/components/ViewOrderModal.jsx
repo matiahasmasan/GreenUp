@@ -1,6 +1,7 @@
 import Modal from "./common/Modal";
 import { formatDate } from "../utils/dateFormatter";
 import { useState, useEffect } from "react";
+import { authFetch } from "../utils/authUtils";
 
 const API_BASE_URL = "/api";
 
@@ -28,17 +29,17 @@ export default function ViewOrderModal({
   const [profitError, setProfitError] = useState("");
 
   useEffect(() => {
-    if (isOpen && selectedOrder?.id) {
+    if (isOpen && isAdmin && selectedOrder?.id) {
       fetchOrderProfit(selectedOrder.id);
     }
-  }, [isOpen, selectedOrder?.id]);
+  }, [isOpen, isAdmin, selectedOrder?.id]);
 
   const fetchOrderProfit = async (orderId) => {
     try {
       setProfitLoading(true);
       setProfitError("");
 
-      const res = await fetch(`${API_BASE_URL}/orders/${orderId}/profit`);
+      const res = await authFetch(`${API_BASE_URL}/orders/${orderId}/profit`);
 
       if (!res.ok) {
         throw new Error("Failed to fetch profit data");
