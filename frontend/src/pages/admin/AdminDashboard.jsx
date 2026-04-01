@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { authFetch } from "../../utils/authUtils";
 import MetricCard from "../../components/MetricCard";
 import OrderStatsChart from "../../components/OrderStatsChart";
 import WeeklyRevenueChart from "../../components/WeeklyRevenueChart";
@@ -29,7 +30,7 @@ export default function AdminDashboard() {
         const queryString = params.toString();
         const url = queryString ? `api/stats?${queryString}` : "api/stats";
 
-        const response = await fetch(url);
+        const response = await authFetch(url);
         const data = await response.json();
         setStats(data);
       } catch (error) {

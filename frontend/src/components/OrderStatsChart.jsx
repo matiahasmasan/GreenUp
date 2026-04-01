@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import { authFetch } from "../utils/authUtils";
 
 export default function OrderStatsChart({ fromDate, toDate }) {
   const [orderStats, setOrderStats] = useState([]);
@@ -22,7 +23,7 @@ export default function OrderStatsChart({ fromDate, toDate }) {
           ? `/api/orders/stats/items?${queryString}`
           : "/api/orders/stats/items";
 
-        const response = await fetch(url);
+        const response = await authFetch(url);
         const data = await response.json();
 
         // Take top 10 items

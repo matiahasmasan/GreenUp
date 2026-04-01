@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { authFetch } from "../utils/authUtils";
 
 export function useOrderModal(apiBaseUrl, onOrderUpdate) {
   const [viewModalOpen, setViewModalOpen] = useState(false);
@@ -14,7 +15,7 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
     try {
       setOrderLoading(true);
       setOrderError("");
-      const res = await fetch(`${apiBaseUrl}/orders/${orderId}`);
+      const res = await authFetch(`${apiBaseUrl}/orders/${orderId}`);
 
       if (!res.ok) {
         if (res.status === 404) {
@@ -47,7 +48,7 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
     try {
       setOrderLoading(true);
       setUpdateError("");
-      const res = await fetch(`${apiBaseUrl}/orders/${orderId}`);
+      const res = await authFetch(`${apiBaseUrl}/orders/${orderId}`);
 
       if (!res.ok) {
         if (res.status === 404) {
@@ -89,7 +90,7 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
     try {
       setUpdateLoading(true);
       setUpdateError("");
-      const res = await fetch(
+      const res = await authFetch(
         `${apiBaseUrl}/orders/${selectedOrder.id}/status`,
         {
           method: "PATCH",

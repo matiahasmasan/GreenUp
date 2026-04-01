@@ -1,6 +1,7 @@
 // src/hooks/useOrderPolling.js
 
 import { useState, useEffect, useRef } from "react";
+import { authFetch } from "../utils/authUtils";
 
 const POLLING_INTERVAL = 5000; // 5 seconds
 
@@ -23,7 +24,7 @@ export function useOrderPolling(apiBaseUrl) {
         setIsRefreshing(true);
       }
 
-      const res = await fetch(`${apiBaseUrl}/history`);
+      const res = await authFetch(`${apiBaseUrl}/history`);
 
       if (!res.ok) {
         throw new Error("Failed to fetch orders");

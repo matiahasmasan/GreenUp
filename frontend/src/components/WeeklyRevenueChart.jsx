@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import { authFetch } from "../utils/authUtils";
 
 export default function WeeklyRevenueChart({ fromDate, toDate }) {
   const [dailyData, setDailyData] = useState([]);
@@ -22,7 +23,7 @@ export default function WeeklyRevenueChart({ fromDate, toDate }) {
           ? `/api/orders/stats/daily-revenue?${queryString}`
           : "/api/orders/stats/daily-revenue";
 
-        const response = await fetch(url);
+        const response = await authFetch(url);
         const data = await response.json();
         setDailyData(data);
       } catch (error) {

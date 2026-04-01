@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { authFetch } from "../../utils/authUtils";
 import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
@@ -88,7 +89,7 @@ export default function OperatorProducts() {
 
     try {
       setEditLoading(true);
-      const res = await fetch(`${API_BASE_URL}/menu-items/availability`, {
+      const res = await authFetch(`${API_BASE_URL}/menu-items/availability`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,7 +121,7 @@ export default function OperatorProducts() {
       setCreateLoading(true);
       setProductError("");
 
-      const res = await fetch(`${API_BASE_URL}/menu-items`, {
+      const res = await authFetch(`${API_BASE_URL}/menu-items`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
