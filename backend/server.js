@@ -2,12 +2,37 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 dotenv.config();
+
+const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+function authenticateToken(req, res, next) {
+  const auth = req.headers["authorization"];
+  const token = auth && auth.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "Authentication required" });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: "Invalid or expired token" });
+    req.user = user;
+    next();
+  });
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!roles.includes(req.user?.role)) {
+      return res.status(403).json({ error: "Insufficient permissions" });
+    }
+    next();
+  };
+}
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
@@ -20,6 +45,38 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+// POST /auth/login
+app.post("/auth/login", async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: "Username and password required" });
+  }
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, username, password_hash, role FROM users WHERE username = ?",
+      [username],
+    );
+    if (rows.length === 0) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+    const user = rows[0];
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid username or password" });
+    }
+    const token = jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "8h" },
+    );
+    res.json({ token, role: user.role, username: user.username });
+  } catch (err) {
+    console.error("Login error", err);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// GET /menu-items - public (clients need this)
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
@@ -33,7 +90,7 @@ app.get("/menu-items", async (_req, res) => {
 });
 
 // PATCH /menu-items/availability - Update product availability
-app.patch("/menu-items/availability", async (req, res) => {
+app.patch("/menu-items/availability", authenticateToken, async (req, res) => {
   const { name, is_available } = req.body;
 
   if (name === undefined || is_available === undefined) {
@@ -60,7 +117,7 @@ app.patch("/menu-items/availability", async (req, res) => {
 });
 
 // PATCH /menu-items/stock - Update product stock
-app.patch("/menu-items/stock", async (req, res) => {
+app.patch("/menu-items/stock", authenticateToken, async (req, res) => {
   const { name, stocks } = req.body;
 
   if (name === undefined || stocks === undefined) {
@@ -154,7 +211,7 @@ app.post("/orders", async (req, res) => {
 });
 
 // GET /orders/:id - Retrieve a single order by ID with its items
-app.get("/orders/:id", async (req, res) => {
+app.get("/orders/:id", authenticateToken, async (req, res) => {
   const orderId = parseInt(req.params.id);
 
   if (isNaN(orderId)) {
@@ -207,7 +264,7 @@ app.get("/orders/:id", async (req, res) => {
 });
 
 // PATCH /orders/:id/status - Update order status
-app.patch("/orders/:id/status", async (req, res) => {
+app.patch("/orders/:id/status", authenticateToken, async (req, res) => {
   const orderId = parseInt(req.params.id);
   const { status } = req.body;
 
@@ -246,7 +303,7 @@ app.patch("/orders/:id/status", async (req, res) => {
 });
 
 // GET /history - Retrieve all orders with their items
-app.get("/history", async (_req, res) => {
+app.get("/history", authenticateToken, async (_req, res) => {
   try {
     // Fetch all orders
     const [orders] = await pool.query(
@@ -289,8 +346,8 @@ app.get("/history", async (_req, res) => {
   }
 });
 
-// POST /menu-items - Create a new menu item
-app.post("/menu-items", async (req, res) => {
+// POST /menu-items - Create a new menu item (admin only)
+app.post("/menu-items", authenticateToken, requireRole("admin"), async (req, res) => {
   const {
     name,
     description,
@@ -358,7 +415,7 @@ app.post("/menu-items", async (req, res) => {
 
 // admin cards
 // GET /stats - Retrieve dashboard metrics
-app.get("/stats", async (req, res) => {
+app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 
   try {
@@ -415,8 +472,8 @@ app.get("/stats", async (req, res) => {
   }
 });
 
-// GET /orders/:id/profit - profit for a specific order
-app.get("/orders/:id/profit", async (req, res) => {
+// GET /orders/:id/profit - profit for a specific order (admin only)
+app.get("/orders/:id/profit", authenticateToken, requireRole("admin"), async (req, res) => {
   const orderId = parseInt(req.params.id);
 
   if (isNaN(orderId)) {
@@ -449,8 +506,8 @@ app.get("/orders/:id/profit", async (req, res) => {
 
 // PIE CHART API
 
-// GET /orders/stats/items - most sold items
-app.get("/orders/stats/items", async (req, res) => {
+// GET /orders/stats/items - most sold items (admin only)
+app.get("/orders/stats/items", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 
   try {
@@ -491,8 +548,8 @@ app.get("/orders/stats/items", async (req, res) => {
   }
 });
 
-// GET /orders/stats/daily-revenue - Get revenue by day for selected period
-app.get("/orders/stats/daily-revenue", async (req, res) => {
+// GET /orders/stats/daily-revenue - Get revenue by day for selected period (admin only)
+app.get("/orders/stats/daily-revenue", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 
   try {
