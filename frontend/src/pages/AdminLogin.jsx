@@ -2,11 +2,6 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { setAuthToken } from "../utils/authUtils";
 
-const HARDCODED_CREDENTIALS = {
-  admin: { password: "admin", role: "admin" },
-  operator: { password: "operator", role: "operator" },
-};
-
 export default function AdminLogin({ onNavigate }) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
@@ -22,29 +17,27 @@ export default function AdminLogin({ onNavigate }) {
     setLoading(true);
 
     try {
-      // Simulate async login with hardcoded credentials
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
 
-      const credentials = HARDCODED_CREDENTIALS[username];
-      if (!credentials || credentials.password !== password) {
-        throw new Error("Invalid username or password");
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
       }
 
-      // Create token with user info
-      const userData = { username, role: credentials.role };
-      const token = btoa(JSON.stringify(userData));
-
-      // Store token
-      setAuthToken(token);
-      login(userData, token);
+      setAuthToken(data.token);
+      login({ username: data.username, role: data.role }, data.token);
 
       setSuccess("Login successful — redirecting...");
 
-      // Navigate to appropriate dashboard based on role
       setTimeout(() => {
-        if (credentials.role === "admin") {
+        if (data.role === "admin") {
           onNavigate?.("admin-dashboard");
-        } else if (credentials.role === "operator") {
+        } else if (data.role === "operator") {
           onNavigate?.("operator-dashboard");
         } else {
           onNavigate?.("home");
@@ -72,7 +65,7 @@ export default function AdminLogin({ onNavigate }) {
               id="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="admin"
+              placeholder="username"
             />
           </div>
 
@@ -83,7 +76,7 @@ export default function AdminLogin({ onNavigate }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="admin"
+              placeholder="password"
             />
           </div>
 

@@ -45,12 +45,12 @@ export function clearAuthToken() {
 }
 
 /**
- * Decode token to get user info (basic base64 decode, not cryptographic)
+ * Decode a JWT to get its payload
  */
 export function decodeToken(token) {
   try {
-    const decoded = JSON.parse(atob(token));
-    return decoded;
+    const payload = token.split(".")[1];
+    return JSON.parse(atob(payload));
   } catch (e) {
     console.error("Failed to decode token", e);
     return null;
@@ -75,10 +75,32 @@ export function getUserRole() {
 }
 
 /**
- * Check if user is authenticated
+ * Check if user is authenticated and token is not expired
  */
 export function isAuthenticated() {
-  return !!getAuthToken();
+  const token = getAuthToken();
+  if (!token) return false;
+  const user = decodeToken(token);
+  if (!user) return false;
+  if (user.exp && user.exp * 1000 < Date.now()) {
+    clearAuthToken();
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Fetch wrapper that automatically adds the Authorization header
+ */
+export function authFetch(url, options = {}) {
+  const token = getAuthToken();
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
 }
 
 /**
