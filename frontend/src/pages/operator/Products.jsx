@@ -20,7 +20,6 @@ export default function OperatorProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [filterAvailability, setFilterAvailability] = useState(null);
-  const [tempAvailability, setTempAvailability] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productError, setProductError] = useState("");
   const productsPerPage = 5;
@@ -79,35 +78,38 @@ export default function OperatorProducts() {
   // Action handlers
   const handleEdit = (product) => {
     setSelectedProduct(product);
-    setTempAvailability(product.is_available === 1);
     setEditModalOpen(true);
     setProductError("");
   };
 
-  const handleSaveAvailability = async () => {
+  const handleUpdateProduct = async (formData) => {
     if (!selectedProduct) return;
 
     try {
       setEditLoading(true);
-      const res = await authFetch(`${API_BASE_URL}/menu-items/availability`, {
-        method: "PATCH",
+      setProductError("");
+
+      const res = await authFetch(`${API_BASE_URL}/menu-items/${selectedProduct.id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: selectedProduct.name,
-          is_available: tempAvailability,
+          name: formData.name,
+          description: formData.description,
+          price: Number(formData.price),
+          cost_price: formData.cost_price !== "" ? Number(formData.cost_price) : null,
+          image_url: formData.image_url,
+          category_id: Number(formData.category_id),
+          is_available: formData.is_available,
+          stocks: Number(formData.stocks),
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update availability");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update product");
+      }
 
-      setProducts((prev) =>
-        prev.map((p) =>
-          p.name === selectedProduct.name
-            ? { ...p, is_available: tempAvailability }
-            : p
-        )
-      );
-
+      await fetchProducts();
       setEditModalOpen(false);
     } catch (err) {
       setProductError(err.message);
@@ -331,13 +333,11 @@ export default function OperatorProducts() {
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
+        onClose={() => { setEditModalOpen(false); setProductError(""); }}
         selectedProduct={selectedProduct}
         loading={editLoading}
         error={productError}
-        tempAvailability={tempAvailability}
-        onAvailabilityChange={setTempAvailability}
-        onSave={handleSaveAvailability}
+        onSave={handleUpdateProduct}
       />
       <CreateProductModal
         isOpen={createModalOpen}
