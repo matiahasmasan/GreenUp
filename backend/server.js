@@ -80,7 +80,7 @@ app.post("/auth/login", async (req, res) => {
 app.get("/menu-items", async (_req, res) => {
   try {
     const [rows] = await pool.query(
-      "SELECT name, description, price, image_url, cost_price,category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC",
+      "SELECT id, name, description, price, image_url, cost_price, category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC",
     );
     res.json(rows);
   } catch (err) {
@@ -346,12 +346,48 @@ app.get("/history", authenticateToken, async (_req, res) => {
   }
 });
 
+// PUT /menu-items/:id - Update a menu item (admin only)
+app.put("/menu-items/:id", authenticateToken, requireRole("admin"), async (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, cost_price, image_url, category_id, is_available, stocks } = req.body;
+
+  if (!name || !price || !category_id || stocks === undefined) {
+    return res.status(400).json({ error: "Missing required fields: name, price, category_id, stocks" });
+  }
+  if (isNaN(price) || Number(price) <= 0) {
+    return res.status(400).json({ error: "Price must be a valid number greater than 0" });
+  }
+  if (isNaN(stocks) || Number(stocks) < 0) {
+    return res.status(400).json({ error: "Stocks must be a valid number greater than or equal to 0" });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `UPDATE menu_items SET name=?, description=?, price=?, cost_price=?, image_url=?, category_id=?, is_available=?, stocks=? WHERE id=?`,
+      [name, description || null, Number(price), cost_price !== undefined ? Number(cost_price) : null, image_url || null, Number(category_id), is_available ? 1 : 0, Number(stocks), id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.json({ success: true, message: "Product updated successfully" });
+  } catch (err) {
+    console.error("Failed to update menu item", err);
+    if (err.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({ error: "A product with this name already exists" });
+    }
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
 // POST /menu-items - Create a new menu item (admin only)
 app.post("/menu-items", authenticateToken, requireRole("admin"), async (req, res) => {
   const {
     name,
     description,
     price,
+    cost_price,
     image_url,
     category_id,
     is_available,
@@ -381,12 +417,13 @@ app.post("/menu-items", authenticateToken, requireRole("admin"), async (req, res
 
   try {
     const [result] = await pool.query(
-      `INSERT INTO menu_items (name, description, price, image_url, category_id, is_available, stocks) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO menu_items (name, description, price, cost_price, image_url, category_id, is_available, stocks)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         name,
         description || null,
         Number(price),
+        cost_price !== undefined ? Number(cost_price) : null,
         image_url || null,
         Number(category_id),
         is_available ? 1 : 0,
