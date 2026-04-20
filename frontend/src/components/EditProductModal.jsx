@@ -41,10 +41,14 @@ export default function EditProductModal({
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: type === "checkbox" ? checked : value };
+      // Auto-disable availability when stock reaches 0
+      if (name === "stocks" && Number(value) === 0) {
+        updated.is_available = false;
+      }
+      return updated;
+    });
     if (formErrors[name]) {
       setFormErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -284,24 +288,29 @@ export default function EditProductModal({
         </div>
 
         {/* Availability Toggle */}
-        <div className="flex items-center gap-4 pt-2">
-          <span className={`text-sm font-bold ${!formData.is_available ? "text-red-600" : "text-gray-400"}`}>
-            Out of Stock
-          </span>
-          <label className="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              name="is_available"
-              className="sr-only peer"
-              checked={formData.is_available}
-              onChange={handleChange}
-              disabled={loading}
-            />
-            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
-          </label>
-          <span className={`text-sm font-bold ${formData.is_available ? "text-green-600" : "text-gray-400"}`}>
-            Available
-          </span>
+        <div className="pt-2">
+          <div className="flex items-center gap-4">
+            <span className={`text-sm font-bold ${!formData.is_available ? "text-red-600" : "text-gray-400"}`}>
+              Out of Stock
+            </span>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                name="is_available"
+                className="sr-only peer"
+                checked={formData.is_available}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
+            </label>
+            <span className={`text-sm font-bold ${formData.is_available ? "text-green-600" : "text-gray-400"}`}>
+              Available
+            </span>
+          </div>
+          {Number(formData.stocks) === 0 && (
+            <p className="text-xs text-amber-600 mt-1">Auto-disabled: stock is 0. You can still enable it manually.</p>
+          )}
         </div>
       </div>
     </Modal>

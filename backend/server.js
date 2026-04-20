@@ -133,9 +133,10 @@ app.patch("/menu-items/stock", authenticateToken, async (req, res) => {
   }
 
   try {
+    const newStocks = Number(stocks);
     const [result] = await pool.query(
-      "UPDATE menu_items SET stocks = ? WHERE name = ?",
-      [Number(stocks), name],
+      "UPDATE menu_items SET stocks = ?, is_available = IF(? <= 0, 0, is_available) WHERE name = ?",
+      [newStocks, newStocks, name],
     );
 
     if (result.affectedRows === 0) {
@@ -187,10 +188,10 @@ app.post("/orders", async (req, res) => {
         [orderId, item.name, item.price, item.quantity, subtotal],
       );
 
-      // Decrement stock for the ordered item
+      // Decrement stock; auto-disable availability if stock reaches 0
       await conn.query(
-        "UPDATE menu_items SET stocks = stocks - ? WHERE name = ? AND stocks >= ?",
-        [item.quantity, item.name, item.quantity],
+        "UPDATE menu_items SET stocks = stocks - ?, is_available = IF(stocks - ? <= 0, 0, is_available) WHERE name = ? AND stocks >= ?",
+        [item.quantity, item.quantity, item.name, item.quantity],
       );
     }
 
@@ -364,7 +365,7 @@ app.put("/menu-items/:id", authenticateToken, requireRole("admin"), async (req, 
   try {
     const [result] = await pool.query(
       `UPDATE menu_items SET name=?, description=?, price=?, cost_price=?, image_url=?, category_id=?, is_available=?, stocks=? WHERE id=?`,
-      [name, description || null, Number(price), cost_price !== undefined ? Number(cost_price) : null, image_url || null, Number(category_id), is_available ? 1 : 0, Number(stocks), id]
+      [name, description || null, Number(price), cost_price !== undefined ? Number(cost_price) : null, image_url || null, Number(category_id), Number(stocks) === 0 ? 0 : (is_available ? 1 : 0), Number(stocks), id]
     );
 
     if (result.affectedRows === 0) {
