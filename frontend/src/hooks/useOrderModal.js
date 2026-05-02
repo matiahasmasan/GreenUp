@@ -7,7 +7,6 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderError, setOrderError] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState("");
 
@@ -59,7 +58,6 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
 
       const data = await res.json();
       setSelectedOrder(data);
-      setSelectedStatus(data.status);
       setEditModalOpen(true);
     } catch (err) {
       setUpdateError(err.message || "Failed to load order details");
@@ -72,49 +70,42 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
   const handleCloseEditModal = () => {
     setEditModalOpen(false);
     setSelectedOrder(null);
-    setSelectedStatus("");
     setUpdateError("");
   };
 
-  const handleUpdateStatus = async () => {
-    if (!selectedOrder || !selectedStatus) {
-      setUpdateError("Please select a status");
-      return;
-    }
-
-    if (selectedStatus === selectedOrder.status) {
-      setUpdateError("Status is already set to this value");
-      return;
-    }
+  const handleUpdateOrder = async (updatedFields) => {
+    if (!selectedOrder?.id) return;
 
     try {
       setUpdateLoading(true);
       setUpdateError("");
-      const res = await authFetch(
-        `${apiBaseUrl}/orders/${selectedOrder.id}/status`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ status: selectedStatus }),
-        }
-      );
+
+      const res = await authFetch(`${apiBaseUrl}/orders/${selectedOrder.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedFields),
+      });
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update order status");
+        throw new Error(errorData.error || "Failed to update order");
       }
 
-      // Notify parent component to update orders
+      const data = await res.json();
+
+      // Notify parent component to update orders list
       if (onOrderUpdate) {
-        onOrderUpdate(selectedOrder.id, selectedStatus);
+        onOrderUpdate(selectedOrder.id, {
+          ...updatedFields,
+          total_amount: data.total_amount,
+        });
       }
 
-      setSelectedOrder({ ...selectedOrder, status: selectedStatus });
       handleCloseEditModal();
     } catch (err) {
-      setUpdateError(err.message || "Failed to update order status");
+      setUpdateError(err.message || "Failed to update order");
       console.error("Error:", err);
     } finally {
       setUpdateLoading(false);
@@ -127,14 +118,12 @@ export function useOrderModal(apiBaseUrl, onOrderUpdate) {
     selectedOrder,
     orderLoading,
     orderError,
-    selectedStatus,
     updateLoading,
     updateError,
     handleView,
     handleEdit,
     handleCloseViewModal,
     handleCloseEditModal,
-    setSelectedStatus,
-    handleUpdateStatus,
+    handleUpdateOrder,
   };
 }

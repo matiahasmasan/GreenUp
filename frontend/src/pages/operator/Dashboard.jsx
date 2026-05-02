@@ -42,21 +42,19 @@ export default function OperatorDashboard() {
     selectedOrder,
     orderLoading,
     orderError,
-    selectedStatus,
     updateLoading,
     updateError,
     handleView,
     handleEdit,
     handleCloseViewModal,
     handleCloseEditModal,
-    setSelectedStatus,
-    handleUpdateStatus,
-  } = useOrderModal(API_BASE_URL, (orderId, newStatus) => {
-    // Update local orders state
+    handleUpdateOrder, // updated: full order update handler
+  } = useOrderModal(API_BASE_URL, (orderId, updatedOrder) => {
+    // Update local orders state with the full updated order
     setOrders((prevOrders) =>
       prevOrders.map((order) =>
-        order.id === orderId ? { ...order, status: newStatus } : order
-      )
+        order.id === orderId ? { ...order, ...updatedOrder } : order,
+      ),
     );
     // Fetch latest data
     fetchOrders(true);
@@ -110,7 +108,7 @@ export default function OperatorDashboard() {
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = filteredOrders.slice(
     indexOfFirstOrder,
-    indexOfLastOrder
+    indexOfLastOrder,
   );
 
   return (
@@ -191,11 +189,9 @@ export default function OperatorDashboard() {
         onClose={handleCloseEditModal}
         selectedOrder={selectedOrder}
         loading={orderLoading}
-        selectedStatus={selectedStatus}
-        onStatusChange={setSelectedStatus}
         updateLoading={updateLoading}
         updateError={updateError}
-        onUpdateStatus={handleUpdateStatus}
+        onUpdateOrder={handleUpdateOrder} // updated prop
       />
     </div>
   );
