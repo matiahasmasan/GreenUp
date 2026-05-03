@@ -6,6 +6,8 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD",
 });
 
+const LOW_STOCK_THRESHOLD = 5;
+
 function MenuSection({
   loading,
   error,
@@ -86,20 +88,33 @@ function MenuSection({
                     const isExpanded = expandedCard === id;
                     const isUnavailable =
                       item.is_available === 0 || item.is_available === false;
+
+                    // Stock helpers
+                    const stock =
+                      item.stocks != null ? Number(item.stocks) : null;
+                    const hasStockTracking = stock !== null;
+                    const isOutOfStock = hasStockTracking && stock <= 0;
+                    const isLowStock =
+                      hasStockTracking &&
+                      stock > 0 &&
+                      stock <= LOW_STOCK_THRESHOLD;
+                    const effectivelyUnavailable =
+                      isUnavailable || isOutOfStock;
+
                     return (
                       <article
                         className={
                           "menu-card" +
                           (isExpanded ? " expanded" : "") +
-                          (isUnavailable ? " unavailable" : "")
+                          (effectivelyUnavailable ? " unavailable" : "")
                         }
                         key={id}
                         role="button"
-                        tabIndex={isUnavailable ? -1 : 0}
+                        tabIndex={effectivelyUnavailable ? -1 : 0}
                         aria-expanded={isExpanded}
-                        aria-disabled={isUnavailable}
+                        aria-disabled={effectivelyUnavailable}
                         onClick={() => {
-                          if (isUnavailable) return;
+                          if (effectivelyUnavailable) return;
                           if (isExpanded) {
                             setExpandedCard(null);
                           } else {
@@ -108,7 +123,7 @@ function MenuSection({
                           }
                         }}
                         onKeyDown={(e) => {
-                          if (isUnavailable) return;
+                          if (effectivelyUnavailable) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
                             if (isExpanded) setExpandedCard(null);
@@ -132,9 +147,25 @@ function MenuSection({
                           <div className="menu-header">
                             <div className="menu-header-title">
                               <h2>{item.name}</h2>
-                              {isUnavailable && (
+                              {(isUnavailable || isOutOfStock) && (
                                 <span className="text-xs text-red-600 font-bold">
                                   OUT OF STOCK
+                                </span>
+                              )}
+                              {isLowStock && !effectivelyUnavailable && (
+                                <span
+                                  style={{
+                                    fontSize: "0.7rem",
+                                    fontWeight: 700,
+                                    color: "#b45309",
+                                    background: "#fef3c7",
+                                    border: "1px solid #fcd34d",
+                                    borderRadius: "4px",
+                                    padding: "1px 6px",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  Only {stock} left!
                                 </span>
                               )}
                             </div>
@@ -144,7 +175,7 @@ function MenuSection({
                           </div>
                           <p className="menu-description">{item.description}</p>
 
-                          {isExpanded && !isUnavailable && (
+                          {isExpanded && !effectivelyUnavailable && (
                             <div className="card-actions">
                               <div
                                 className="quantity-control"
@@ -163,11 +194,42 @@ function MenuSection({
                                 <button
                                   type="button"
                                   aria-label="Increase quantity"
-                                  onClick={() => setQuantity((q) => q + 1)}
+                                  disabled={
+                                    hasStockTracking && quantity >= stock
+                                  }
+                                  style={
+                                    hasStockTracking && quantity >= stock
+                                      ? {
+                                          opacity: 0.4,
+                                          cursor: "not-allowed",
+                                        }
+                                      : {}
+                                  }
+                                  onClick={() => {
+                                    if (hasStockTracking && quantity >= stock)
+                                      return;
+                                    setQuantity((q) => q + 1);
+                                  }}
                                 >
                                   +
                                 </button>
                               </div>
+
+                              {/* Stock limit reached notice */}
+                              {hasStockTracking && quantity >= stock && (
+                                <p
+                                  style={{
+                                    fontSize: "0.72rem",
+                                    color: "#b45309",
+                                    margin: "0.25rem 0 0",
+                                    textAlign: "center",
+                                    width: "100%",
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  Max available: {stock}
+                                </p>
+                              )}
 
                               <button
                                 type="button"
@@ -181,7 +243,7 @@ function MenuSection({
                               </button>
                             </div>
                           )}
-                          {isExpanded && isUnavailable && (
+                          {isExpanded && effectivelyUnavailable && (
                             <div
                               style={{
                                 padding: "0.75rem 0",
