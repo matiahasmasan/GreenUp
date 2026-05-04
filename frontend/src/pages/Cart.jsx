@@ -1,5 +1,6 @@
 import React from "react";
 import Hero from "../components/Hero";
+import QuantityControl from "../components/QuantityControl";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -70,36 +71,19 @@ export default function Cart({
                 <p className="menu-description">{item.description}</p>
 
                 <div className="cart-item-footer">
-                  <div className="quantity-control">
-                    <button
-                      onClick={() =>
-                        onUpdateQuantity(item.cartKey, item.quantity - 1)
-                      }
-                      aria-label="Decrease quantity"
-                    >
-                      −
-                    </button>
-                    <span className="quantity">{item.quantity}</span>
-                    <button
-                      disabled={isAtStockLimit}
-                      style={
-                        isAtStockLimit
-                          ? { opacity: 0.4, cursor: "not-allowed" }
-                          : {}
-                      }
-                      onClick={() =>
-                        onUpdateQuantity(item.cartKey, item.quantity + 1)
-                      }
-                      aria-label="Increase quantity"
-                    >
-                      +
-                    </button>
-                  </div>
-                  {isAtStockLimit && (
-                    <p className="menu-description" style={{ margin: 0 }}>
-                      Max available: {stock}
-                    </p>
-                  )}
+                  <QuantityControl
+                    quantity={item.quantity}
+                    onDecrease={() =>
+                      onUpdateQuantity(item.cartKey, item.quantity - 1)
+                    }
+                    onIncrease={() =>
+                      onUpdateQuantity(item.cartKey, item.quantity + 1)
+                    }
+                    disableIncrease={isAtStockLimit}
+                    maxMessage={
+                      isAtStockLimit ? `Max available: ${stock}` : null
+                    }
+                  />
 
                   <p className="price">
                     {priceFormatter.format(Number(item.price) * item.quantity)}

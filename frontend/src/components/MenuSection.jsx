@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORY_OPTIONS } from "./CategoryTabs";
+import QuantityControl from "./QuantityControl";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -177,61 +178,27 @@ function MenuSection({
 
                           {isExpanded && !effectivelyUnavailable && (
                             <div className="card-actions">
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  gap: "0.25rem",
+                              <QuantityControl
+                                quantity={quantity}
+                                onDecrease={() =>
+                                  setQuantity((q) => Math.max(1, q - 1))
+                                }
+                                onIncrease={() => {
+                                  if (hasStockTracking && quantity >= stock) {
+                                    return;
+                                  }
+                                  setQuantity((q) => q + 1);
                                 }}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className="quantity-control">
-                                  <button
-                                    type="button"
-                                    aria-label="Decrease quantity"
-                                    onClick={() =>
-                                      setQuantity((q) => Math.max(1, q - 1))
-                                    }
-                                  >
-                                    −
-                                  </button>
-                                  <span className="quantity">{quantity}</span>
-                                  <button
-                                    type="button"
-                                    aria-label="Increase quantity"
-                                    disabled={
-                                      hasStockTracking && quantity >= stock
-                                    }
-                                    style={
-                                      hasStockTracking && quantity >= stock
-                                        ? {
-                                            opacity: 0.4,
-                                            cursor: "not-allowed",
-                                          }
-                                        : {}
-                                    }
-                                    onClick={() => {
-                                      if (hasStockTracking && quantity >= stock)
-                                        return;
-                                      setQuantity((q) => q + 1);
-                                    }}
-                                  >
-                                    +
-                                  </button>
-                                </div>
-                                {hasStockTracking && quantity >= stock && (
-                                  <p
-                                    style={{
-                                      fontSize: "0.72rem",
-                                      color: "#b45309",
-                                      margin: 0,
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    Max: {stock}
-                                  </p>
-                                )}
-                              </div>
+                                disableIncrease={
+                                  hasStockTracking && quantity >= stock
+                                }
+                                maxMessage={
+                                  hasStockTracking && quantity >= stock
+                                    ? `Max: ${stock}`
+                                    : null
+                                }
+                                stopPropagation
+                              />
 
                               <button
                                 type="button"
