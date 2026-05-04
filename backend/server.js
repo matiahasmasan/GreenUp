@@ -885,6 +885,41 @@ app.get(
   },
 );
 
+// GET /order-reviews - list reviews (admin only)
+app.get(
+  "/order-reviews",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    try {
+      const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
+
+      const [rows] = await pool.query(
+        `
+        SELECT
+          r.id,
+          r.order_id,
+          r.rating,
+          r.comment,
+          r.created_at,
+          o.customer_name,
+          o.table_number
+        FROM order_reviews r
+        JOIN orders o ON o.id = r.order_id
+        ORDER BY r.created_at DESC
+        LIMIT ?
+      `,
+        [limit],
+      );
+
+      res.json(rows);
+    } catch (err) {
+      console.error("Failed to fetch order reviews", err);
+      res.status(500).json({ error: "Failed to fetch order reviews" });
+    }
+  },
+);
+
 const PORT = process.env.PORT || 4000;
 
 async function start() {
