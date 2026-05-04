@@ -178,58 +178,60 @@ function MenuSection({
                           {isExpanded && !effectivelyUnavailable && (
                             <div className="card-actions">
                               <div
-                                className="quantity-control"
+                                style={{
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "0.25rem",
+                                }}
                                 onClick={(e) => e.stopPropagation()}
                               >
-                                <button
-                                  type="button"
-                                  aria-label="Decrease quantity"
-                                  onClick={() =>
-                                    setQuantity((q) => Math.max(1, q - 1))
-                                  }
-                                >
-                                  −
-                                </button>
-                                <span className="quantity">{quantity}</span>
-                                <button
-                                  type="button"
-                                  aria-label="Increase quantity"
-                                  disabled={
-                                    hasStockTracking && quantity >= stock
-                                  }
-                                  style={
-                                    hasStockTracking && quantity >= stock
-                                      ? {
-                                          opacity: 0.4,
-                                          cursor: "not-allowed",
-                                        }
-                                      : {}
-                                  }
-                                  onClick={() => {
-                                    if (hasStockTracking && quantity >= stock)
-                                      return;
-                                    setQuantity((q) => q + 1);
-                                  }}
-                                >
-                                  +
-                                </button>
+                                <div className="quantity-control">
+                                  <button
+                                    type="button"
+                                    aria-label="Decrease quantity"
+                                    onClick={() =>
+                                      setQuantity((q) => Math.max(1, q - 1))
+                                    }
+                                  >
+                                    −
+                                  </button>
+                                  <span className="quantity">{quantity}</span>
+                                  <button
+                                    type="button"
+                                    aria-label="Increase quantity"
+                                    disabled={
+                                      hasStockTracking && quantity >= stock
+                                    }
+                                    style={
+                                      hasStockTracking && quantity >= stock
+                                        ? {
+                                            opacity: 0.4,
+                                            cursor: "not-allowed",
+                                          }
+                                        : {}
+                                    }
+                                    onClick={() => {
+                                      if (hasStockTracking && quantity >= stock)
+                                        return;
+                                      setQuantity((q) => q + 1);
+                                    }}
+                                  >
+                                    +
+                                  </button>
+                                </div>
+                                {hasStockTracking && quantity >= stock && (
+                                  <p
+                                    style={{
+                                      fontSize: "0.72rem",
+                                      color: "#b45309",
+                                      margin: 0,
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    Max: {stock}
+                                  </p>
+                                )}
                               </div>
-
-                              {/* Stock limit reached notice */}
-                              {hasStockTracking && quantity >= stock && (
-                                <p
-                                  style={{
-                                    fontSize: "0.72rem",
-                                    color: "#b45309",
-                                    margin: "0.25rem 0 0",
-                                    textAlign: "center",
-                                    width: "100%",
-                                  }}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  Max available: {stock}
-                                </p>
-                              )}
 
                               <button
                                 type="button"
