@@ -2,6 +2,7 @@ import React from "react";
 import Cart from "../pages/Cart";
 import Checkout from "../pages/Checkout";
 import ConfirmedOrder from "../pages/ConfirmedOrder";
+import LeaveFeedback from "../pages/LeaveFeedback";
 import AdminLogin from "../pages/AdminLogin";
 import ClientHome from "../pages/client/Home";
 import OperatorDashboard from "../pages/operator/Dashboard";
@@ -67,6 +68,10 @@ export default function AppRouter({
 
   if (route === "confirmed") {
     return <ConfirmedOrder lastOrder={lastOrder} onNavigate={onNavigate} />;
+  }
+
+  if (route === "feedback") {
+    return <LeaveFeedback lastOrder={lastOrder} onNavigate={onNavigate} />;
   }
 
   if (route === "login") {

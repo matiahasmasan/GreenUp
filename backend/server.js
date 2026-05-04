@@ -45,6 +45,21 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
+async function ensureOrderReviewsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_reviews (
+      id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id INT NOT NULL,
+      rating TINYINT UNSIGNED NOT NULL,
+      comment TEXT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_order_reviews_order (order_id),
+      CONSTRAINT fk_order_reviews_order
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+}
+
 // POST /auth/login
 app.post("/auth/login", async (req, res) => {
   const { username, password } = req.body;
@@ -240,6 +255,71 @@ app.post("/orders", async (req, res) => {
     });
   } finally {
     conn.release();
+  }
+});
+
+// POST /order-reviews — public; verifies order details match the placed order
+app.post("/order-reviews", async (req, res) => {
+  const { orderId, customerName, table, rating, comment } = req.body;
+
+  if (
+    orderId === undefined ||
+    orderId === null ||
+    !customerName ||
+    table === undefined ||
+    table === null ||
+    table === "" ||
+    rating === undefined ||
+    rating === null ||
+    rating === ""
+  ) {
+    return res.status(400).json({
+      error:
+        "Missing required fields: orderId, customerName, table, and rating",
+    });
+  }
+
+  const numericRating = Number(rating);
+  if (
+    !Number.isInteger(numericRating) ||
+    numericRating < 1 ||
+    numericRating > 5
+  ) {
+    return res.status(400).json({ error: "Rating must be an integer from 1 to 5" });
+  }
+
+  const oid = parseInt(orderId, 10);
+  if (isNaN(oid)) {
+    return res.status(400).json({ error: "Invalid order ID" });
+  }
+
+  const commentText =
+    typeof comment === "string" ? comment.trim().slice(0, 2000) : null;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT id FROM orders WHERE id = ? AND customer_name = ? AND table_number = ?",
+      [oid, String(customerName).trim(), String(table).trim()],
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Order not found or details do not match" });
+    }
+
+    await pool.query(
+      "INSERT INTO order_reviews (order_id, rating, comment) VALUES (?, ?, ?)",
+      [oid, numericRating, commentText || null],
+    );
+
+    res.status(201).json({ success: true, message: "Thank you for your feedback" });
+  } catch (err) {
+    if (err && err.code === "ER_DUP_ENTRY") {
+      return res
+        .status(409)
+        .json({ error: "Feedback has already been submitted for this order" });
+    }
+    console.error("Failed to save order review", err);
+    res.status(500).json({ error: "Failed to save feedback" });
   }
 });
 
@@ -806,7 +886,18 @@ app.get(
 );
 
 const PORT = process.env.PORT || 4000;
-// Adding "0.0.0.0" allows network access
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Backend listening on port ${PORT} (Network Accessible)`);
-});
+
+async function start() {
+  try {
+    await ensureOrderReviewsTable();
+  } catch (err) {
+    console.error("Could not ensure order_reviews table:", err.message);
+    process.exit(1);
+  }
+
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Backend listening on port ${PORT} (Network Accessible)`);
+  });
+}
+
+start();

@@ -13,6 +13,8 @@ export function useNavigation(setRoute, logout, setCartItems) {
         setRoute("checkout");
       } else if (key === "confirmed") {
         setRoute("confirmed");
+      } else if (key === "feedback") {
+        setRoute("feedback");
       } else if (key === "login") {
         setRoute("login");
       } else if (key === "admin-dashboard") {

@@ -74,6 +74,16 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
 
           <p style={{ marginTop: "1rem", fontWeight: 600 }}>{estimated}</p>
 
+          <p style={{ marginTop: "1rem" }}>
+            <button
+              type="button"
+              className="link-button"
+              onClick={() => onNavigate && onNavigate("feedback")}
+            >
+              Leave feedback (or review)
+            </button>
+          </p>
+
           <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
             <button
               className="checkout-back"
