@@ -180,16 +180,48 @@ app.post("/orders", async (req, res) => {
 
     // Insert order items and update stock
     for (const item of items) {
-      const subtotal = Number(item.price) * item.quantity;
+      const requestedQty = Number(item.quantity);
+      if (!Number.isInteger(requestedQty) || requestedQty <= 0) {
+        const quantityError = new Error(
+          `Invalid quantity for item "${item.name}".`,
+        );
+        quantityError.statusCode = 400;
+        throw quantityError;
+      }
+
+      const [stockRows] = await conn.query(
+        "SELECT stocks FROM menu_items WHERE name = ? FOR UPDATE",
+        [item.name],
+      );
+
+      if (stockRows.length === 0) {
+        const notFoundError = new Error(`Item "${item.name}" no longer exists.`);
+        notFoundError.statusCode = 404;
+        throw notFoundError;
+      }
+
+      const availableStock = Number(stockRows[0].stocks);
+      if (!Number.isFinite(availableStock) || availableStock < requestedQty) {
+        const stockError = new Error(
+          `Not enough stock for "${item.name}". Available: ${Math.max(
+            0,
+            availableStock || 0,
+          )}.`,
+        );
+        stockError.statusCode = 409;
+        throw stockError;
+      }
+
+      const subtotal = Number(item.price) * requestedQty;
       await conn.query(
         "INSERT INTO order_items (order_id, item_name, item_price, quantity, subtotal) VALUES (?, ?, ?, ?, ?)",
-        [orderId, item.name, item.price, item.quantity, subtotal],
+        [orderId, item.name, item.price, requestedQty, subtotal],
       );
 
       // Decrement stock; auto-disable availability if stock reaches 0
       await conn.query(
-        "UPDATE menu_items SET stocks = stocks - ?, is_available = IF(stocks - ? <= 0, 0, is_available) WHERE name = ? AND stocks >= ?",
-        [item.quantity, item.quantity, item.name, item.quantity],
+        "UPDATE menu_items SET is_available = IF(stocks - ? <= 0, 0, is_available), stocks = stocks - ? WHERE name = ?",
+        [requestedQty, requestedQty, item.name],
       );
     }
 
@@ -203,7 +235,9 @@ app.post("/orders", async (req, res) => {
   } catch (err) {
     await conn.rollback();
     console.error("Failed to create order", err);
-    res.status(500).json({ error: "Failed to create order" });
+    res.status(err.statusCode || 500).json({
+      error: err.message || "Failed to create order",
+    });
   } finally {
     conn.release();
   }
@@ -458,11 +492,9 @@ app.put(
     } = req.body;
 
     if (!name || !price || !category_id || stocks === undefined) {
-      return res
-        .status(400)
-        .json({
-          error: "Missing required fields: name, price, category_id, stocks",
-        });
+      return res.status(400).json({
+        error: "Missing required fields: name, price, category_id, stocks",
+      });
     }
     if (isNaN(price) || Number(price) <= 0) {
       return res
@@ -470,11 +502,9 @@ app.put(
         .json({ error: "Price must be a valid number greater than 0" });
     }
     if (isNaN(stocks) || Number(stocks) < 0) {
-      return res
-        .status(400)
-        .json({
-          error: "Stocks must be a valid number greater than or equal to 0",
-        });
+      return res.status(400).json({
+        error: "Stocks must be a valid number greater than or equal to 0",
+      });
     }
 
     try {

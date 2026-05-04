@@ -1,5 +1,10 @@
 import { useState, useCallback, useMemo } from "react";
 
+function getMaxAllowedQuantity(item) {
+  const stock = item?.stocks != null ? Number(item.stocks) : null;
+  return stock !== null && Number.isFinite(stock) && stock >= 0 ? stock : null;
+}
+
 export function useCart() {
   const [cartItems, setCartItems] = useState([]);
 
@@ -9,21 +14,31 @@ export function useCart() {
       const existingItem = prevItems.find(
         (i) => `${i.name}-${i.price}` === itemKey
       );
+      const safeRequestedQty = Math.max(1, Number(quantity) || 1);
 
       if (existingItem) {
+        const maxQty = getMaxAllowedQuantity(existingItem);
+        const nextQty = existingItem.quantity + safeRequestedQty;
         return prevItems.map((i) =>
           `${i.name}-${i.price}` === itemKey
-            ? { ...i, quantity: i.quantity + quantity }
+            ? {
+                ...i,
+                quantity: maxQty === null ? nextQty : Math.min(nextQty, maxQty),
+              }
             : i
         );
       }
 
-      return [...prevItems, { ...item, quantity, cartKey: itemKey }];
+      const maxQty = getMaxAllowedQuantity(item);
+      const initialQty =
+        maxQty === null ? safeRequestedQty : Math.min(safeRequestedQty, maxQty);
+      return [...prevItems, { ...item, quantity: initialQty, cartKey: itemKey }];
     });
   }, []);
 
   const updateCartItemQuantity = useCallback((itemKey, newQuantity) => {
-    if (newQuantity <= 0) {
+    const parsedQty = Number(newQuantity);
+    if (!Number.isFinite(parsedQty) || parsedQty <= 0) {
       setCartItems((prevItems) =>
         prevItems.filter((item) => item.cartKey !== itemKey)
       );
@@ -32,7 +47,15 @@ export function useCart() {
 
     setCartItems((prevItems) =>
       prevItems.map((item) =>
-        item.cartKey === itemKey ? { ...item, quantity: newQuantity } : item
+        item.cartKey === itemKey
+          ? {
+              ...item,
+              quantity: (() => {
+                const maxQty = getMaxAllowedQuantity(item);
+                return maxQty === null ? parsedQty : Math.min(parsedQty, maxQty);
+              })(),
+            }
+          : item
       )
     );
   }, []);

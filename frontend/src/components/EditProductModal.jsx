@@ -32,7 +32,9 @@ export default function EditProductModal({
         cost_price: selectedProduct.cost_price ?? "",
         image_url: selectedProduct.image_url ?? "",
         category_id: selectedProduct.category_id ?? "",
-        is_available: selectedProduct.is_available === 1 || selectedProduct.is_available === true,
+        is_available:
+          selectedProduct.is_available === 1 ||
+          selectedProduct.is_available === true,
         stocks: selectedProduct.stocks ?? "",
       });
       setFormErrors({});
@@ -42,10 +44,15 @@ export default function EditProductModal({
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData((prev) => {
-      const updated = { ...prev, [name]: type === "checkbox" ? checked : value };
+      const updated = {
+        ...prev,
+        [name]: type === "checkbox" ? checked : value,
+      };
       // Auto-disable availability when stock reaches 0
       if (name === "stocks" && Number(value) === 0) {
-        updated.is_available = false;
+        // updated.is_available = false;
+        // console.log("stock is 0");
+        // am dezactivat provizoriu feature-ul
       }
       return updated;
     });
@@ -58,23 +65,38 @@ export default function EditProductModal({
     const errors = {};
 
     if (!formData.name.trim()) errors.name = "Product name is required";
-    if (!formData.description.trim()) errors.description = "Product description is required";
+    if (!formData.description.trim())
+      errors.description = "Product description is required";
 
-    if (!formData.price || isNaN(formData.price) || Number(formData.price) <= 0) {
+    if (
+      !formData.price ||
+      isNaN(formData.price) ||
+      Number(formData.price) <= 0
+    ) {
       errors.price = "Please enter a valid price greater than 0";
     }
 
-    if (formData.cost_price !== "" && (isNaN(formData.cost_price) || Number(formData.cost_price) < 0)) {
+    if (
+      formData.cost_price !== "" &&
+      (isNaN(formData.cost_price) || Number(formData.cost_price) < 0)
+    ) {
       errors.cost_price = "Please enter a valid cost price (0 or greater)";
     }
 
-    if (formData.cost_price !== "" && Number(formData.cost_price) > Number(formData.price)) {
+    if (
+      formData.cost_price !== "" &&
+      Number(formData.cost_price) > Number(formData.price)
+    ) {
       errors.cost_price = "Cost price cannot be greater than selling price";
     }
 
     if (!formData.category_id) errors.category_id = "Please select a category";
 
-    if (formData.stocks === "" || isNaN(formData.stocks) || Number(formData.stocks) < 0) {
+    if (
+      formData.stocks === "" ||
+      isNaN(formData.stocks) ||
+      Number(formData.stocks) < 0
+    ) {
       errors.stocks = "Please enter a valid stock quantity (0 or greater)";
     }
 
@@ -145,7 +167,9 @@ export default function EditProductModal({
             placeholder="Enter product name"
             disabled={loading}
           />
-          {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
+          {formErrors.name && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>
+          )}
         </div>
 
         {/* Category */}
@@ -169,7 +193,11 @@ export default function EditProductModal({
               </option>
             ))}
           </select>
-          {formErrors.category_id && <p className="text-red-500 text-sm mt-1">{formErrors.category_id}</p>}
+          {formErrors.category_id && (
+            <p className="text-red-500 text-sm mt-1">
+              {formErrors.category_id}
+            </p>
+          )}
         </div>
 
         {/* Price and Cost Price */}
@@ -191,7 +219,9 @@ export default function EditProductModal({
               placeholder="0.00"
               disabled={loading}
             />
-            {formErrors.price && <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>}
+            {formErrors.price && (
+              <p className="text-red-500 text-sm mt-1">{formErrors.price}</p>
+            )}
           </div>
 
           <div>
@@ -211,7 +241,11 @@ export default function EditProductModal({
               placeholder="0.00"
               disabled={loading}
             />
-            {formErrors.cost_price && <p className="text-red-500 text-sm mt-1">{formErrors.cost_price}</p>}
+            {formErrors.cost_price && (
+              <p className="text-red-500 text-sm mt-1">
+                {formErrors.cost_price}
+              </p>
+            )}
           </div>
         </div>
 
@@ -220,12 +254,20 @@ export default function EditProductModal({
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-sm font-semibold text-gray-700">Profit per unit:</p>
-                <p className="text-lg font-bold text-green-600">${profitInfo.profit}</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  Profit per unit:
+                </p>
+                <p className="text-lg font-bold text-green-600">
+                  ${profitInfo.profit}
+                </p>
               </div>
               <div className="text-right">
-                <p className="text-sm font-semibold text-gray-700">Profit Margin:</p>
-                <p className="text-lg font-bold text-blue-600">{profitInfo.margin}%</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  Profit Margin:
+                </p>
+                <p className="text-lg font-bold text-blue-600">
+                  {profitInfo.margin}%
+                </p>
               </div>
             </div>
           </div>
@@ -249,7 +291,9 @@ export default function EditProductModal({
             placeholder="0"
             disabled={loading}
           />
-          {formErrors.stocks && <p className="text-red-500 text-sm mt-1">{formErrors.stocks}</p>}
+          {formErrors.stocks && (
+            <p className="text-red-500 text-sm mt-1">{formErrors.stocks}</p>
+          )}
         </div>
 
         {/* Description */}
@@ -268,7 +312,11 @@ export default function EditProductModal({
             placeholder="Enter product description"
             disabled={loading}
           />
-          {formErrors.description && <p className="text-red-500 text-sm mt-1">{formErrors.description}</p>}
+          {formErrors.description && (
+            <p className="text-red-500 text-sm mt-1">
+              {formErrors.description}
+            </p>
+          )}
         </div>
 
         {/* Image URL */}
@@ -290,7 +338,9 @@ export default function EditProductModal({
         {/* Availability Toggle */}
         <div className="pt-2">
           <div className="flex items-center gap-4">
-            <span className={`text-sm font-bold ${!formData.is_available ? "text-red-600" : "text-gray-400"}`}>
+            <span
+              className={`text-sm font-bold ${!formData.is_available ? "text-red-600" : "text-gray-400"}`}
+            >
               Out of Stock
             </span>
             <label className="relative inline-flex items-center cursor-pointer">
@@ -304,12 +354,16 @@ export default function EditProductModal({
               />
               <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-500"></div>
             </label>
-            <span className={`text-sm font-bold ${formData.is_available ? "text-green-600" : "text-gray-400"}`}>
+            <span
+              className={`text-sm font-bold ${formData.is_available ? "text-green-600" : "text-gray-400"}`}
+            >
               Available
             </span>
           </div>
           {Number(formData.stocks) === 0 && (
-            <p className="text-xs text-amber-600 mt-1">Auto-disabled: stock is 0. You can still enable it manually.</p>
+            <p className="text-xs text-amber-600 mt-1">
+              Auto-disabled: stock is 0. You can still enable it manually.
+            </p>
           )}
         </div>
       </div>

@@ -41,7 +41,12 @@ export default function Cart({
         </div>
 
         <div className="cart-items">
-          {cartItems.map((item) => (
+          {cartItems.map((item) => {
+            const stock = item.stocks != null ? Number(item.stocks) : null;
+            const isAtStockLimit =
+              stock !== null && Number.isFinite(stock) && item.quantity >= stock;
+
+            return (
             <div key={item.cartKey} className="cart-item">
               {item.image_url && (
                 <img
@@ -76,6 +81,12 @@ export default function Cart({
                     </button>
                     <span className="quantity">{item.quantity}</span>
                     <button
+                      disabled={isAtStockLimit}
+                      style={
+                        isAtStockLimit
+                          ? { opacity: 0.4, cursor: "not-allowed" }
+                          : {}
+                      }
                       onClick={() =>
                         onUpdateQuantity(item.cartKey, item.quantity + 1)
                       }
@@ -84,6 +95,11 @@ export default function Cart({
                       +
                     </button>
                   </div>
+                  {isAtStockLimit && (
+                    <p className="menu-description" style={{ margin: 0 }}>
+                      Max available: {stock}
+                    </p>
+                  )}
 
                   <p className="price">
                     {priceFormatter.format(Number(item.price) * item.quantity)}
@@ -91,7 +107,8 @@ export default function Cart({
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="cart-summary">
