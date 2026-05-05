@@ -7,6 +7,7 @@ import EditProductModal from "../../components/EditProductModal";
 import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
 import CreateProductModal from "../../components/CreateProductModal";
+import DeleteProductModal from "../../components/DeleteProductModal";
 import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = "/api";
@@ -29,6 +30,9 @@ export default function OperatorProducts() {
   const [editLoading, setEditLoading] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteTargetProduct, setDeleteTargetProduct] = useState(null);
   // for profit features
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -149,6 +153,48 @@ export default function OperatorProducts() {
       setProductError(err.message);
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  const handleDelete = (product) => {
+    setDeleteTargetProduct(product);
+    setDeleteModalOpen(true);
+    setProductError("");
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (deleteLoading) return;
+    setDeleteModalOpen(false);
+    setDeleteTargetProduct(null);
+    setProductError("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetProduct?.id) return;
+
+    try {
+      setDeleteLoading(true);
+      setProductError("");
+
+      const res = await authFetch(
+        `${API_BASE_URL}/menu-items/${deleteTargetProduct.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete product");
+      }
+
+      await fetchProducts();
+      setDeleteModalOpen(false);
+      setDeleteTargetProduct(null);
+    } catch (err) {
+      setProductError(err.message || "Failed to delete product");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -300,6 +346,14 @@ export default function OperatorProducts() {
                           >
                             <i className="fas fa-edit"></i>
                           </button>
+                          {/* DELETE BUTTON */}
+                          <button
+                            onClick={() => handleDelete(product)}
+                            className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition"
+                            title="Delete product"
+                          >
+                            <i className="fas fa-trash"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -348,6 +402,14 @@ export default function OperatorProducts() {
         onSave={handleCreateProduct}
         loading={createLoading}
         error={productError}
+      />
+      <DeleteProductModal
+        isOpen={deleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        product={deleteTargetProduct}
+        deleteLoading={deleteLoading}
+        deleteError={productError}
+        onConfirmDelete={handleConfirmDelete}
       />
     </div>
   );

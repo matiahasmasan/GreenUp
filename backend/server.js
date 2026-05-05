@@ -756,6 +756,47 @@ app.post(
   },
 );
 
+// DELETE /menu-items/:id - Delete a menu item (operator/admin)
+app.delete(
+  "/menu-items/:id",
+  authenticateToken,
+  requireRole("operator", "admin"),
+  async (req, res) => {
+    const { id } = req.params;
+    const numericId = Number(id);
+
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    try {
+      const [result] = await pool.query("DELETE FROM menu_items WHERE id = ?", [
+        numericId,
+      ]);
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      res.json({
+        success: true,
+        message: "Product deleted successfully",
+        id: numericId,
+      });
+    } catch (err) {
+      console.error("Failed to delete menu item", err);
+
+      if (err.code === "ER_ROW_IS_REFERENCED_2" || err.code === "ER_ROW_IS_REFERENCED") {
+        return res.status(409).json({
+          error: "Cannot delete this product because it is referenced by existing records",
+        });
+      }
+
+      res.status(500).json({ error: "Failed to delete product" });
+    }
+  },
+);
+
 // admin cards
 // GET /stats - Retrieve dashboard metrics
 app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
