@@ -1,3 +1,36 @@
-GreenUp
+# GreenUp
 
-A simple, mobile-friendly web app that allows customers to order food directly from their table using a QR code, while the kitchen and admin staff manage orders efficiently.
+A web app for ordering food via QR codes. Customers order from their table, while kitchen and admin staff manage orders.
+
+## Project Structure
+
+- `frontend/` - React app for customers and admin dashboard
+- `backend/` - Node.js/Express server
+
+## Getting Started
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+### Backend
+
+```bash
+cd backend
+npm install
+node server.js
+```
+
+## Tech Stack
+
+- Frontend: React, Vite
+- Backend: Node.js, Express
+- Database: (configured in backend)
+
+## Status
+
+Currently in development.
