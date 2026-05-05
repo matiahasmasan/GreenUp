@@ -1,4 +1,4 @@
-export default function OrdersTable({ orders, onView, onEdit }) {
+export default function OrdersTable({ orders, onView, onEdit, onDelete }) {
   const getStatusStyles = (status) => {
     const statusValue = status ? status.toLowerCase().trim() : "";
 
@@ -77,6 +77,13 @@ export default function OrdersTable({ orders, onView, onEdit }) {
                       title="Edit order"
                     >
                       <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      onClick={() => onDelete(order)}
+                      className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition"
+                      title="Delete order"
+                    >
+                      <i className="fas fa-trash"></i>
                     </button>
                   </div>
                 </td>

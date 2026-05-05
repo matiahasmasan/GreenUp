@@ -3,6 +3,7 @@ import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import ViewOrderModal from "../../components/ViewOrderModal";
 import EditOrderModal from "../../components/EditOrderModal";
+import DeleteOrderModal from "../../components/DeleteOrderModal";
 import OrderFilters from "../../components/OrderFilters";
 import OrdersTable from "../../components/OrdersTable";
 import RefreshButton from "../../components/RefreshButton";
@@ -10,6 +11,7 @@ import NewOrderNotification from "../../components/NewOrderNotification";
 import { useOrderPolling } from "../../hooks/useOrderPolling";
 import { useOrderModal } from "../../hooks/useOrderModal";
 import { useAuth } from "../../context/AuthContext";
+import { authFetch } from "../../utils/authUtils";
 
 const API_BASE_URL = "/api";
 
@@ -18,6 +20,10 @@ export default function OperatorDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargetOrder, setDeleteTargetOrder] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const ordersPerPage = 10;
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
@@ -62,8 +68,8 @@ export default function OperatorDashboard() {
 
   // Update modals open state for polling
   useEffect(() => {
-    setModalsOpen(viewModalOpen || editModalOpen);
-  }, [viewModalOpen, editModalOpen, setModalsOpen]);
+    setModalsOpen(viewModalOpen || editModalOpen || deleteModalOpen);
+  }, [viewModalOpen, editModalOpen, deleteModalOpen, setModalsOpen]);
 
   // Filtering logic
   const filteredOrders = useMemo(() => {
@@ -110,6 +116,47 @@ export default function OperatorDashboard() {
     indexOfFirstOrder,
     indexOfLastOrder,
   );
+
+  const handleDeleteOrder = (order) => {
+    setDeleteError("");
+    setDeleteTargetOrder(order);
+    setDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = (force = false) => {
+    if (deleteLoading && !force) return;
+    setDeleteModalOpen(false);
+    setDeleteTargetOrder(null);
+    setDeleteError("");
+  };
+
+  const handleConfirmDeleteOrder = async () => {
+    if (!deleteTargetOrder?.id) return;
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      const res = await authFetch(`${API_BASE_URL}/orders/${deleteTargetOrder.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete order");
+      }
+
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order.id !== deleteTargetOrder.id),
+      );
+      handleCloseDeleteModal(true);
+      fetchOrders(true);
+    } catch (err) {
+      console.error("Failed to delete order", err);
+      setDeleteError(err.message || "Failed to delete order");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   return (
     <div className="checkout-section mt-2">
@@ -162,6 +209,7 @@ export default function OperatorDashboard() {
             orders={currentOrders}
             onView={handleView}
             onEdit={handleEdit}
+            onDelete={handleDeleteOrder}
           />
 
           <Pagination
@@ -192,6 +240,15 @@ export default function OperatorDashboard() {
         updateLoading={updateLoading}
         updateError={updateError}
         onUpdateOrder={handleUpdateOrder} // updated prop
+      />
+
+      <DeleteOrderModal
+        isOpen={deleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        order={deleteTargetOrder}
+        deleteLoading={deleteLoading}
+        deleteError={deleteError}
+        onConfirmDelete={handleConfirmDeleteOrder}
       />
     </div>
   );

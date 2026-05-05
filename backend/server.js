@@ -509,6 +509,68 @@ app.patch("/orders/:id/status", authenticateToken, async (req, res) => {
   }
 });
 
+// DELETE /orders/:id - Delete an order (operator/admin)
+app.delete(
+  "/orders/:id",
+  authenticateToken,
+  requireRole("operator", "admin"),
+  async (req, res) => {
+    const orderId = parseInt(req.params.id, 10);
+    if (isNaN(orderId)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+
+      const [existingOrders] = await conn.query(
+        "SELECT id FROM orders WHERE id = ? FOR UPDATE",
+        [orderId],
+      );
+
+      if (existingOrders.length === 0) {
+        await conn.rollback();
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      // Restock items from the deleted order so inventory stays consistent.
+      const [orderItems] = await conn.query(
+        "SELECT item_name, quantity FROM order_items WHERE order_id = ?",
+        [orderId],
+      );
+
+      for (const item of orderItems) {
+        const quantity = Number(item.quantity) || 0;
+        if (quantity <= 0) continue;
+
+        await conn.query(
+          "UPDATE menu_items SET stocks = stocks + ?, is_available = IF(stocks + ? > 0, 1, is_available) WHERE name = ?",
+          [quantity, quantity, item.item_name],
+        );
+      }
+
+      await conn.query("DELETE FROM order_items WHERE order_id = ?", [orderId]);
+      await conn.query("DELETE FROM order_reviews WHERE order_id = ?", [orderId]);
+      await conn.query("DELETE FROM orders WHERE id = ?", [orderId]);
+
+      await conn.commit();
+
+      res.json({
+        success: true,
+        message: "Order deleted successfully",
+        orderId,
+      });
+    } catch (err) {
+      await conn.rollback();
+      console.error("Failed to delete order", err);
+      res.status(500).json({ error: "Failed to delete order" });
+    } finally {
+      conn.release();
+    }
+  },
+);
+
 // GET /history - Retrieve all orders with their items
 app.get("/history", authenticateToken, async (_req, res) => {
   try {

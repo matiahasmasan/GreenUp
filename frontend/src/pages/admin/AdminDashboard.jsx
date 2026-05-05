@@ -71,7 +71,7 @@ export default function AdminDashboard() {
   const getDateRangeText = () => {
     if (fromDate && toDate) {
       return `${new Date(fromDate).toLocaleDateString("ro-RO")} - ${new Date(
-        toDate
+        toDate,
       ).toLocaleDateString("ro-RO")}`;
     } else if (fromDate) {
       return `From ${new Date(fromDate).toLocaleDateString("ro-RO")}`;
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
           icon="fas fa-shopping-basket"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "+12%" }}
+          trend={{ positive: true, value: "0%" }}
         />
         {/* Total revenue except cancelled */}
         <MetricCard
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
           icon="fas fa-wallet"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "+12%" }}
+          trend={{ positive: true, value: "0%" }}
         />
         {/* All-time cancelled orders */}
         <MetricCard
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
           icon="fas fa-times-circle"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: false, value: "-12%" }}
+          trend={{ positive: false, value: "0%" }}
         />
         {/* Total profit */}
         <MetricCard
@@ -151,7 +151,7 @@ export default function AdminDashboard() {
           icon="fas fa-piggy-bank"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "+12%" }}
+          trend={{ positive: true, value: "0%" }}
         />
       </div>
 
@@ -168,9 +168,7 @@ export default function AdminDashboard() {
             {reviewsError}
           </div>
         ) : reviews.length === 0 ? (
-          <div className="p-6 text-center text-gray-500">
-            No reviews yet.
-          </div>
+          <div className="p-6 text-center text-gray-500">No reviews yet.</div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm overflow-hidden">
             <div className="p-4" style={{ display: "grid", gap: "0.75rem" }}>
@@ -212,7 +210,9 @@ export default function AdminDashboard() {
                       </span>
                     </div>
 
-                    <div style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                    <div
+                      style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}
+                    >
                       Order #{r.order_id} • Table {r.table_number} •{" "}
                       {r.customer_name}
                       {r.created_at ? (
