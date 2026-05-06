@@ -104,6 +104,54 @@ app.get("/menu-items", async (_req, res) => {
   }
 });
 
+// GET /most-sold-items - public; get the most sold items of all time
+app.get("/most-sold-items", async (_req, res) => {
+  try {
+    // First, get the maximum quantity sold for any single item
+    const [maxResult] = await pool.query(
+      `
+      SELECT MAX(total_quantity) as max_quantity
+      FROM (
+        SELECT SUM(oi.quantity) as total_quantity
+        FROM order_items oi
+        JOIN orders o ON oi.order_id = o.id
+        WHERE o.status != 'cancelled'
+        GROUP BY oi.item_name
+      ) as item_stats
+    `,
+    );
+
+    const maxQuantity = maxResult[0]?.max_quantity;
+
+    if (!maxQuantity) {
+      return res.json([]);
+    }
+
+    // Then, get all items with that maximum quantity
+    const [rows] = await pool.query(
+      `
+      SELECT 
+        oi.item_name,
+        SUM(oi.quantity) as total_quantity,
+        COUNT(DISTINCT oi.order_id) as order_count,
+        SUM(oi.subtotal) as total_revenue
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status != 'cancelled'
+      GROUP BY oi.item_name
+      HAVING total_quantity = ?
+      ORDER BY oi.item_name ASC
+    `,
+      [maxQuantity],
+    );
+
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch most sold items", err);
+    res.status(500).json({ error: "Failed to fetch most sold items" });
+  }
+});
+
 // PATCH /menu-items/availability - Update product availability
 app.patch("/menu-items/availability", authenticateToken, async (req, res) => {
   const { name, is_available } = req.body;
@@ -210,7 +258,9 @@ app.post("/orders", async (req, res) => {
       );
 
       if (stockRows.length === 0) {
-        const notFoundError = new Error(`Item "${item.name}" no longer exists.`);
+        const notFoundError = new Error(
+          `Item "${item.name}" no longer exists.`,
+        );
         notFoundError.statusCode = 404;
         throw notFoundError;
       }
@@ -285,7 +335,9 @@ app.post("/order-reviews", async (req, res) => {
     numericRating < 1 ||
     numericRating > 5
   ) {
-    return res.status(400).json({ error: "Rating must be an integer from 1 to 5" });
+    return res
+      .status(400)
+      .json({ error: "Rating must be an integer from 1 to 5" });
   }
 
   const oid = parseInt(orderId, 10);
@@ -303,7 +355,9 @@ app.post("/order-reviews", async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ error: "Order not found or details do not match" });
+      return res
+        .status(404)
+        .json({ error: "Order not found or details do not match" });
     }
 
     await pool.query(
@@ -311,7 +365,9 @@ app.post("/order-reviews", async (req, res) => {
       [oid, numericRating, commentText || null],
     );
 
-    res.status(201).json({ success: true, message: "Thank you for your feedback" });
+    res
+      .status(201)
+      .json({ success: true, message: "Thank you for your feedback" });
   } catch (err) {
     if (err && err.code === "ER_DUP_ENTRY") {
       return res
@@ -551,7 +607,9 @@ app.delete(
       }
 
       await conn.query("DELETE FROM order_items WHERE order_id = ?", [orderId]);
-      await conn.query("DELETE FROM order_reviews WHERE order_id = ?", [orderId]);
+      await conn.query("DELETE FROM order_reviews WHERE order_id = ?", [
+        orderId,
+      ]);
       await conn.query("DELETE FROM orders WHERE id = ?", [orderId]);
 
       await conn.commit();
@@ -786,9 +844,13 @@ app.delete(
     } catch (err) {
       console.error("Failed to delete menu item", err);
 
-      if (err.code === "ER_ROW_IS_REFERENCED_2" || err.code === "ER_ROW_IS_REFERENCED") {
+      if (
+        err.code === "ER_ROW_IS_REFERENCED_2" ||
+        err.code === "ER_ROW_IS_REFERENCED"
+      ) {
         return res.status(409).json({
-          error: "Cannot delete this product because it is referenced by existing records",
+          error:
+            "Cannot delete this product because it is referenced by existing records",
         });
       }
 

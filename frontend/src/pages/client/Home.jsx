@@ -12,6 +12,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState(null);
+  const [mostSoldItems, setMostSoldItems] = useState([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -19,21 +20,30 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
     async function fetchMenu() {
       try {
         setLoading(true);
-        const res = await fetch(`${API_BASE_URL}/menu-items`, {
-          signal: controller.signal,
-        });
+        const [menuRes, statsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/menu-items`, { signal: controller.signal }),
+          fetch(`${API_BASE_URL}/most-sold-items`, {
+            signal: controller.signal,
+          }),
+        ]);
 
-        if (!res.ok) {
+        if (!menuRes.ok) {
           throw new Error("Unable to load menu");
         }
 
-        const data = await res.json();
+        const menuData = await menuRes.json();
         setMenuItems(
-          data.map((item) => ({
+          menuData.map((item) => ({
             ...item,
             category_id: item.category_id ? Number(item.category_id) : null,
-          }))
+          })),
         );
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setMostSoldItems(statsData.map((item) => item.item_name));
+        }
+
         setError("");
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -62,7 +72,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
 
   const availableCategoryIds = useMemo(() => {
     const ids = Array.from(
-      new Set(filteredItems.map((item) => item.category_id).filter(Boolean))
+      new Set(filteredItems.map((item) => item.category_id).filter(Boolean)),
     );
     const order = CATEGORY_OPTIONS.map((option) => option.id);
     return ids.sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -110,6 +120,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
         emptyMessage={emptyStateMessage}
         selectedCategory={activeCategory}
         onAddToCart={onAddToCart}
+        mostSoldItems={mostSoldItems}
       />
     </>
   );

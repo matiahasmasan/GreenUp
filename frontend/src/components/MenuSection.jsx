@@ -16,6 +16,7 @@ function MenuSection({
   emptyMessage,
   selectedCategory,
   onAddToCart,
+  mostSoldItems,
 }) {
   const sectionRefs = useRef({});
   const [expandedCard, setExpandedCard] = useState(null);
@@ -153,6 +154,23 @@ function MenuSection({
                                   OUT OF STOCK
                                 </span>
                               )}
+                              {mostSoldItems &&
+                                mostSoldItems.includes(item.name) && (
+                                  <span
+                                    style={{
+                                      fontSize: "0.7rem",
+                                      fontWeight: 700,
+                                      color: "#065f46",
+                                      background: "#d1fae5",
+                                      border: "1px solid #6ee7b7",
+                                      borderRadius: "4px",
+                                      padding: "1px 6px",
+                                      whiteSpace: "nowrap",
+                                    }}
+                                  >
+                                    🌟 Most Sold
+                                  </span>
+                                )}
                               {isLowStock && !effectivelyUnavailable && (
                                 <span
                                   style={{
