@@ -7,8 +7,8 @@ export default function ReviewsSection({ reviews, loading, error }) {
 
   // Calculate average rating
   const averageRating = useMemo(() => {
-    if (reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, r) => acc + Number(r.rating), 0);
+    if (!reviews || reviews.length === 0) return "0.0";
+    const sum = reviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
     return (sum / reviews.length).toFixed(1);
   }, [reviews]);
 
@@ -137,6 +137,9 @@ export default function ReviewsSection({ reviews, loading, error }) {
             currentPage={currentPage}
             totalPages={totalPages}
             onPageChange={setCurrentPage}
+            totalItems={reviews.length}
+            itemsPerPage={itemsPerPage}
+            itemName="reviews"
           />
         </div>
       )}

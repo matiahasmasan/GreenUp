@@ -13,20 +13,17 @@ export default function Pagination({
   const nextPage = () => {
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const prevPage = () => {
     if (currentPage > 1) {
       onPageChange(currentPage - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const goToPage = (pageNumber) => {
     onPageChange(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   if (totalPages <= 1) return null;
@@ -94,7 +91,7 @@ export default function Pagination({
                   {pageNum}
                 </button>
               );
-            }
+            },
           )}
         </div>
 
