@@ -35,7 +35,10 @@ export default function EditOrderModal({
   const fetchReview = async (orderId) => {
     try {
       const res = await authFetch(`${API_BASE_URL}/orders/${orderId}/review`);
-      if (res.status === 404) { setOrderReview(null); return; }
+      if (res.status === 404) {
+        setOrderReview(null);
+        return;
+      }
       if (!res.ok) return;
       setOrderReview(await res.json());
     } catch {
@@ -47,7 +50,10 @@ export default function EditOrderModal({
     if (!selectedOrder?.id) return;
     try {
       setDeleteReviewLoading(true);
-      const res = await authFetch(`${API_BASE_URL}/orders/${selectedOrder.id}/review`, { method: "DELETE" });
+      const res = await authFetch(
+        `${API_BASE_URL}/orders/${selectedOrder.id}/review`,
+        { method: "DELETE" },
+      );
       if (!res.ok) throw new Error("Failed to delete review");
       setOrderReview(null);
     } catch {
@@ -423,11 +429,24 @@ export default function EditOrderModal({
             )}
           </div>
 
+          {/* Kitchen Note */}
+          {selectedOrder.kitchen_note && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-green-800 mb-1">
+                <i className="fas fa-utensils mr-1"></i> Kitchen Note
+              </p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {selectedOrder.kitchen_note}
+              </p>
+            </div>
+          )}
           {/* Review Section */}
           {orderReview && (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-semibold text-gray-800">Customer Review</h3>
+                <h3 className="text-base font-semibold text-gray-800">
+                  Customer Review
+                </h3>
                 <button
                   onClick={handleDeleteReview}
                   disabled={deleteReviewLoading}
@@ -442,17 +461,24 @@ export default function EditOrderModal({
                     key={n}
                     className="fas fa-star"
                     style={{
-                      color: orderReview.rating >= n ? "var(--green-500, #22c55e)" : "#d1d5db",
+                      color:
+                        orderReview.rating >= n
+                          ? "var(--green-500, #22c55e)"
+                          : "#d1d5db",
                       fontSize: "0.9rem",
                     }}
                   />
                 ))}
-                <span className="text-sm text-gray-600 ml-1">{orderReview.rating}/5</span>
+                <span className="text-sm text-gray-600 ml-1">
+                  {orderReview.rating}/5
+                </span>
               </div>
               {orderReview.comment ? (
                 <p className="text-gray-700 text-sm">{orderReview.comment}</p>
               ) : (
-                <p className="text-gray-400 text-sm italic">No comment provided.</p>
+                <p className="text-gray-400 text-sm italic">
+                  No comment provided.
+                </p>
               )}
             </div>
           )}

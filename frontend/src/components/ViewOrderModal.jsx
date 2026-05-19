@@ -126,7 +126,7 @@ export default function ViewOrderModal({
               <p className="text-sm font-semibold text-gray-600 mb-1">Status</p>
               <span
                 className={`inline-block px-3 py-1 rounded text-sm font-semibold capitalize ${getStatusStyles(
-                  selectedOrder.status
+                  selectedOrder.status,
                 )}`}
               >
                 {selectedOrder.status || "Not Set"}
@@ -196,7 +196,7 @@ export default function ViewOrderModal({
                           <div className="text-base font-semibold text-gray-900">
                             $
                             {(parseFloat(item.price) * item.quantity).toFixed(
-                              2
+                              2,
                             )}
                           </div>
                         </div>
@@ -220,6 +220,19 @@ export default function ViewOrderModal({
               </table>
             </div>
           </div>
+
+          {/* Kitchen Note */}
+          {selectedOrder.kitchen_note && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm font-semibold text-green-800 mb-1">
+                <i className="fas fa-utensils mr-1"></i> Kitchen Note
+              </p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                {selectedOrder.kitchen_note}
+              </p>
+            </div>
+          )}
+
           {/* Review Section */}
           {orderReview ? (
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
@@ -247,7 +260,9 @@ export default function ViewOrderModal({
               {orderReview.comment ? (
                 <p className="text-gray-700 text-sm">{orderReview.comment}</p>
               ) : (
-                <p className="text-gray-400 text-sm italic">No comment provided.</p>
+                <p className="text-gray-400 text-sm italic">
+                  No comment provided.
+                </p>
               )}
             </div>
           ) : null}
@@ -281,7 +296,7 @@ export default function ViewOrderModal({
                     <p className="text-2xl font-bold text-green-400">
                       {calculateProfitMargin(
                         orderProfit,
-                        selectedOrder.total_amount
+                        selectedOrder.total_amount,
                       ).toFixed(2)}
                       %
                     </p>

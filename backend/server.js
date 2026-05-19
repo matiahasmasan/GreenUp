@@ -226,7 +226,7 @@ app.patch("/menu-items/stock", authenticateToken, async (req, res) => {
 
 // POST /orders - Create a new order
 app.post("/orders", async (req, res) => {
-  const { customerName, table, paymentMethod, items, total } = req.body;
+  const { customerName, table, paymentMethod, items, total, kitchenNote } = req.body;
 
   // Validate required fields
   if (
@@ -248,8 +248,8 @@ app.post("/orders", async (req, res) => {
 
     // Insert order with default status 'pending'
     const [orderResult] = await conn.query(
-      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status) VALUES (?, ?, ?, ?, ?)",
-      [customerName, table, paymentMethod, total || 0, "pending"],
+      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status, kitchen_note) VALUES (?, ?, ?, ?, ?, ?)",
+      [customerName, table, paymentMethod, total || 0, "pending", kitchenNote?.trim() || null],
     );
 
     const orderId = orderResult.insertId;
@@ -403,8 +403,8 @@ app.get("/orders/:id", authenticateToken, async (req, res) => {
   try {
     // Fetch the order
     const [orders] = await pool.query(
-      `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
-       FROM orders 
+      `SELECT id, customer_name, table_number, payment_method, total_amount, status, kitchen_note, created_at, updated_at
+       FROM orders
        WHERE id = ?`,
       [orderId],
     );
@@ -647,8 +647,8 @@ app.get("/history", authenticateToken, async (_req, res) => {
   try {
     // Fetch all orders
     const [orders] = await pool.query(
-      `SELECT id, customer_name, table_number, payment_method, total_amount, status, created_at, updated_at 
-       FROM orders 
+      `SELECT id, customer_name, table_number, payment_method, total_amount, status, kitchen_note, created_at, updated_at
+       FROM orders
        ORDER BY created_at DESC`,
     );
 
