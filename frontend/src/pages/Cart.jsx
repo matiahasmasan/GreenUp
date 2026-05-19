@@ -15,10 +15,10 @@ export default function Cart({
   kitchenNote,
   onSetKitchenNote,
 }) {
-  const total = cartItems.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0,
-  );
+  const total = cartItems.reduce((sum, item) => {
+    const addonTotal = (item.selectedAddons || []).reduce((s, a) => s + Number(a.price), 0);
+    return sum + (Number(item.price) + addonTotal) * item.quantity;
+  }, 0);
 
   if (cartItems.length === 0) {
     return (
@@ -63,7 +63,18 @@ export default function Cart({
 
                 <div className="cart-item-content">
                   <div className="cart-item-header">
-                    <h3>{item.name}</h3>
+                    <div>
+                      <h3>{item.name}</h3>
+                      {item.selectedAddons?.length > 0 && (
+                        <ul className="cart-item-addons">
+                          {item.selectedAddons.map((a) => (
+                            <li key={a.id}>
+                              + {a.name}{a.price > 0 ? ` (+$${Number(a.price).toFixed(2)})` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     <button
                       onClick={() => onRemoveItem(item.cartKey)}
                       className="cart-remove-btn"
@@ -91,7 +102,7 @@ export default function Cart({
 
                     <p className="price">
                       {priceFormatter.format(
-                        Number(item.price) * item.quantity,
+                        ((item.selectedAddons || []).reduce((s, a) => s + Number(a.price), 0) + Number(item.price)) * item.quantity,
                       )}
                     </p>
                   </div>

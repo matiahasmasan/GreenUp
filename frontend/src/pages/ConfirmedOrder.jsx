@@ -50,6 +50,7 @@ export default function ConfirmedOrder({ lastOrder, onNavigate }) {
           <p style={{ margin: "0.5rem 0 1rem" }}>
             Your order has been received.
           </p>
+          {/* Cooking animation */}
           <div className="cooking-animation">
             <svg
               viewBox="0 0 120 90"

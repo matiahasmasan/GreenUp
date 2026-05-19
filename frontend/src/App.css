@@ -715,6 +715,71 @@ h1 {
   color: #dc2626;
 }
 
+.cart-item-addons {
+  list-style: none;
+  margin: 0.2rem 0 0;
+  padding: 0;
+}
+
+.cart-item-addons li {
+  font-size: 0.75rem;
+  color: var(--green-600);
+  font-weight: 500;
+}
+
+.order-item-addons {
+  list-style: none;
+  margin: 0.15rem 0 0;
+  padding: 0;
+}
+
+.order-item-addons li {
+  font-size: 0.75rem;
+  color: var(--green-600);
+}
+
+.addons-list {
+  padding: 0.5rem 0 0.25rem;
+  border-top: 1px solid var(--gray-200);
+}
+
+.addons-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--green-700);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.4rem;
+}
+
+.addon-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--green-800);
+}
+
+.addon-checkbox {
+  accent-color: var(--green-500);
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.addon-name {
+  flex: 1;
+}
+
+.addon-price {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--green-600);
+}
+
 .cart-item-footer {
   display: flex;
   justify-content: space-between;

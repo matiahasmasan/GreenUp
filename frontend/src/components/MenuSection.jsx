@@ -21,6 +21,15 @@ function MenuSection({
   const sectionRefs = useRef({});
   const [expandedCard, setExpandedCard] = useState(null);
   const [quantity, setQuantity] = useState(1);
+  const [selectedAddons, setSelectedAddons] = useState([]);
+
+  const toggleAddon = (addon) => {
+    setSelectedAddons((prev) =>
+      prev.some((a) => a.id === addon.id)
+        ? prev.filter((a) => a.id !== addon.id)
+        : [...prev, addon],
+    );
+  };
 
   const groupedSections = useMemo(() => {
     const groups = categories.map((option) => ({
@@ -50,9 +59,10 @@ function MenuSection({
   }, [selectedCategory, groupedSections]);
 
   const handleAddToCart = (item, qty) => {
-    onAddToCart(item, qty);
+    onAddToCart(item, qty, selectedAddons);
     setExpandedCard(null);
     setQuantity(1);
+    setSelectedAddons([]);
   };
 
   return (
@@ -119,20 +129,19 @@ function MenuSection({
                           if (effectivelyUnavailable) return;
                           if (isExpanded) {
                             setExpandedCard(null);
+                            setSelectedAddons([]);
                           } else {
                             setExpandedCard(id);
                             setQuantity(1);
+                            setSelectedAddons([]);
                           }
                         }}
                         onKeyDown={(e) => {
                           if (effectivelyUnavailable) return;
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            if (isExpanded) setExpandedCard(null);
-                            else {
-                              setExpandedCard(id);
-                              setQuantity(1);
-                            }
+                            if (isExpanded) { setExpandedCard(null); setSelectedAddons([]); }
+                            else { setExpandedCard(id); setQuantity(1); setSelectedAddons([]); }
                           }
                         }}
                       >
@@ -193,6 +202,30 @@ function MenuSection({
                             </span>
                           </div>
                           <p className="menu-description">{item.description}</p>
+
+                          {isExpanded && !effectivelyUnavailable && item.addons?.length > 0 && (
+                            <div className="addons-list">
+                              <p className="addons-title">Add-ons</p>
+                              {item.addons.map((addon) => (
+                                <label
+                                  key={addon.id}
+                                  className="addon-option"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="addon-checkbox"
+                                    checked={selectedAddons.some((a) => a.id === addon.id)}
+                                    onChange={() => toggleAddon(addon)}
+                                  />
+                                  <span className="addon-name">{addon.name}</span>
+                                  {addon.price > 0 && (
+                                    <span className="addon-price">+${Number(addon.price).toFixed(2)}</span>
+                                  )}
+                                </label>
+                              ))}
+                            </div>
+                          )}
 
                           {isExpanded && !effectivelyUnavailable && (
                             <div className="card-actions">

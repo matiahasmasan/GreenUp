@@ -8,31 +8,30 @@ function getMaxAllowedQuantity(item) {
 export function useCart() {
   const [cartItems, setCartItems] = useState([]);
 
-  const addToCart = useCallback((item, quantity) => {
+  const addToCart = useCallback((item, quantity, selectedAddons = []) => {
     setCartItems((prevItems) => {
-      const itemKey = `${item.name}-${item.price}`;
-      const existingItem = prevItems.find(
-        (i) => `${i.name}-${i.price}` === itemKey
-      );
+      const addonKey = selectedAddons.map((a) => a.id).sort().join(",");
+      const itemKey = `${item.name}-${item.price}-${addonKey}`;
+      const existingItem = prevItems.find((i) => i.cartKey === itemKey);
       const safeRequestedQty = Math.max(1, Number(quantity) || 1);
 
       if (existingItem) {
         const maxQty = getMaxAllowedQuantity(existingItem);
         const nextQty = existingItem.quantity + safeRequestedQty;
         return prevItems.map((i) =>
-          `${i.name}-${i.price}` === itemKey
-            ? {
-                ...i,
-                quantity: maxQty === null ? nextQty : Math.min(nextQty, maxQty),
-              }
-            : i
+          i.cartKey === itemKey
+            ? { ...i, quantity: maxQty === null ? nextQty : Math.min(nextQty, maxQty) }
+            : i,
         );
       }
 
       const maxQty = getMaxAllowedQuantity(item);
       const initialQty =
         maxQty === null ? safeRequestedQty : Math.min(safeRequestedQty, maxQty);
-      return [...prevItems, { ...item, quantity: initialQty, cartKey: itemKey }];
+      return [
+        ...prevItems,
+        { ...item, quantity: initialQty, cartKey: itemKey, selectedAddons },
+      ];
     });
   }, []);
 

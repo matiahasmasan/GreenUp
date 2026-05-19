@@ -107,10 +107,20 @@ app.get("/categories", async (_req, res) => {
 // GET /menu-items - public (clients need this)
 app.get("/menu-items", async (_req, res) => {
   try {
-    const [rows] = await pool.query(
+    const [items] = await pool.query(
       "SELECT id, name, description, price, image_url, cost_price, category_id, is_available, stocks FROM menu_items ORDER BY category_id ASC, name ASC",
     );
-    res.json(rows);
+    const [addons] = await pool.query(
+      "SELECT id, menu_item_id, name, price FROM product_addons WHERE is_available = 1 ORDER BY id ASC",
+    );
+
+    const addonsByItemId = addons.reduce((acc, addon) => {
+      if (!acc[addon.menu_item_id]) acc[addon.menu_item_id] = [];
+      acc[addon.menu_item_id].push({ id: addon.id, name: addon.name, price: Number(addon.price) });
+      return acc;
+    }, {});
+
+    res.json(items.map((item) => ({ ...item, addons: addonsByItemId[item.id] || [] })));
   } catch (err) {
     console.error("Failed to fetch menu items", err);
     res.status(500).json({ error: "Failed to fetch menu items" });
@@ -290,11 +300,19 @@ app.post("/orders", async (req, res) => {
         throw stockError;
       }
 
-      const subtotal = Number(item.price) * requestedQty;
-      await conn.query(
+      const addonTotal = (item.selectedAddons || []).reduce((sum, a) => sum + Number(a.price), 0);
+      const subtotal = (Number(item.price) + addonTotal) * requestedQty;
+      const [orderItemResult] = await conn.query(
         "INSERT INTO order_items (order_id, item_name, item_price, quantity, subtotal) VALUES (?, ?, ?, ?, ?)",
         [orderId, item.name, item.price, requestedQty, subtotal],
       );
+
+      for (const addon of item.selectedAddons || []) {
+        await conn.query(
+          "INSERT INTO order_item_addons (order_item_id, addon_name, addon_price) VALUES (?, ?, ?)",
+          [orderItemResult.insertId, addon.name, Number(addon.price)],
+        );
+      }
 
       // Decrement stock; auto-disable availability if stock reaches 0
       await conn.query(
@@ -417,12 +435,26 @@ app.get("/orders/:id", authenticateToken, async (req, res) => {
 
     // Fetch order items
     const [orderItems] = await pool.query(
-      `SELECT order_id, item_name, item_price, quantity, subtotal 
-       FROM order_items 
+      `SELECT id, order_id, item_name, item_price, quantity, subtotal
+       FROM order_items
        WHERE order_id = ?
        ORDER BY id`,
       [orderId],
     );
+
+    const orderItemIds = orderItems.map((i) => i.id);
+    let addonsByItemId = {};
+    if (orderItemIds.length > 0) {
+      const [addons] = await pool.query(
+        `SELECT order_item_id, addon_name, addon_price FROM order_item_addons WHERE order_item_id IN (?)`,
+        [orderItemIds],
+      );
+      addonsByItemId = addons.reduce((acc, a) => {
+        if (!acc[a.order_item_id]) acc[a.order_item_id] = [];
+        acc[a.order_item_id].push({ name: a.addon_name, price: Number(a.addon_price) });
+        return acc;
+      }, {});
+    }
 
     // Format items
     const items = orderItems.map((item) => ({
@@ -430,6 +462,7 @@ app.get("/orders/:id", authenticateToken, async (req, res) => {
       price: item.item_price,
       quantity: item.quantity,
       subtotal: item.subtotal,
+      addons: addonsByItemId[item.id] || [],
     }));
 
     // Combine order with its items
@@ -654,21 +687,29 @@ app.get("/history", authenticateToken, async (_req, res) => {
 
     // Fetch all order items
     const [orderItems] = await pool.query(
-      `SELECT order_id, item_name, item_price, quantity, subtotal 
-       FROM order_items 
+      `SELECT id, order_id, item_name, item_price, quantity, subtotal
+       FROM order_items
        ORDER BY order_id, id`,
     );
 
+    const [allAddons] = await pool.query(
+      `SELECT order_item_id, addon_name, addon_price FROM order_item_addons ORDER BY id`,
+    );
+    const addonsByOrderItemId = allAddons.reduce((acc, a) => {
+      if (!acc[a.order_item_id]) acc[a.order_item_id] = [];
+      acc[a.order_item_id].push({ name: a.addon_name, price: Number(a.addon_price) });
+      return acc;
+    }, {});
+
     // Group items by order_id
     const itemsByOrder = orderItems.reduce((acc, item) => {
-      if (!acc[item.order_id]) {
-        acc[item.order_id] = [];
-      }
+      if (!acc[item.order_id]) acc[item.order_id] = [];
       acc[item.order_id].push({
         name: item.item_name,
         price: item.item_price,
         quantity: item.quantity,
         subtotal: item.subtotal,
+        addons: addonsByOrderItemId[item.id] || [],
       });
       return acc;
     }, {});
@@ -685,6 +726,113 @@ app.get("/history", authenticateToken, async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch orders" });
   }
 });
+
+// GET /menu-items/:id/addons - get add-ons for a product (admin/operator)
+app.get(
+  "/menu-items/:id/addons",
+  authenticateToken,
+  requireRole("admin", "operator"),
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid product ID" });
+    try {
+      const [rows] = await pool.query(
+        "SELECT id, name, price, is_available FROM product_addons WHERE menu_item_id = ? ORDER BY id ASC",
+        [id],
+      );
+      res.json(rows.map((r) => ({ ...r, price: Number(r.price) })));
+    } catch (err) {
+      console.error("Failed to fetch add-ons", err);
+      res.status(500).json({ error: "Failed to fetch add-ons" });
+    }
+  },
+);
+
+// POST /menu-items/:id/addons - create an add-on (admin only)
+app.post(
+  "/menu-items/:id/addons",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    const menuItemId = parseInt(req.params.id, 10);
+    if (isNaN(menuItemId)) return res.status(400).json({ error: "Invalid product ID" });
+
+    const { name, price } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: "Name is required" });
+    const numericPrice = Number(price ?? 0);
+    if (isNaN(numericPrice) || numericPrice < 0) {
+      return res.status(400).json({ error: "Price must be 0 or greater" });
+    }
+
+    try {
+      const [result] = await pool.query(
+        "INSERT INTO product_addons (menu_item_id, name, price) VALUES (?, ?, ?)",
+        [menuItemId, name.trim(), numericPrice],
+      );
+      res.status(201).json({ id: result.insertId, name: name.trim(), price: numericPrice, is_available: 1 });
+    } catch (err) {
+      console.error("Failed to create add-on", err);
+      res.status(500).json({ error: "Failed to create add-on" });
+    }
+  },
+);
+
+// PATCH /product-addons/:id - update name, price, or availability (admin only)
+app.patch(
+  "/product-addons/:id",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid add-on ID" });
+
+    const { name, price, is_available } = req.body;
+    const fields = [];
+    const values = [];
+
+    if (name !== undefined) { fields.push("name = ?"); values.push(name.trim()); }
+    if (price !== undefined) {
+      const p = Number(price);
+      if (isNaN(p) || p < 0) return res.status(400).json({ error: "Price must be 0 or greater" });
+      fields.push("price = ?"); values.push(p);
+    }
+    if (is_available !== undefined) { fields.push("is_available = ?"); values.push(is_available ? 1 : 0); }
+
+    if (fields.length === 0) return res.status(400).json({ error: "Nothing to update" });
+    values.push(id);
+
+    try {
+      const [result] = await pool.query(
+        `UPDATE product_addons SET ${fields.join(", ")} WHERE id = ?`,
+        values,
+      );
+      if (result.affectedRows === 0) return res.status(404).json({ error: "Add-on not found" });
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to update add-on", err);
+      res.status(500).json({ error: "Failed to update add-on" });
+    }
+  },
+);
+
+// DELETE /product-addons/:id - delete an add-on (admin only)
+app.delete(
+  "/product-addons/:id",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid add-on ID" });
+    try {
+      const [result] = await pool.query("DELETE FROM product_addons WHERE id = ?", [id]);
+      if (result.affectedRows === 0) return res.status(404).json({ error: "Add-on not found" });
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Failed to delete add-on", err);
+      res.status(500).json({ error: "Failed to delete add-on" });
+    }
+  },
+);
 
 // PUT /menu-items/:id - Update a menu item (admin only)
 app.put(

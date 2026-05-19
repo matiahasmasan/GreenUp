@@ -27,10 +27,10 @@ export default function Checkout({
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState(null); // { type: 'success'|'error', text: string }
 
-  const total = cartItems.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0,
-  );
+  const total = cartItems.reduce((sum, item) => {
+    const addonTotal = (item.selectedAddons || []).reduce((s, a) => s + Number(a.price), 0);
+    return sum + (Number(item.price) + addonTotal) * item.quantity;
+  }, 0);
 
   const isFormValid = () => {
     return name.trim() && table.toString().trim();
@@ -241,11 +241,22 @@ export default function Checkout({
               {cartItems.map((item) => (
                 <div key={item.cartKey} className="order-item">
                   <div className="order-item-info">
-                    <span className="order-item-name">{item.name}</span>
+                    <div>
+                      <span className="order-item-name">{item.name}</span>
+                      {item.selectedAddons?.length > 0 && (
+                        <ul className="order-item-addons">
+                          {item.selectedAddons.map((a) => (
+                            <li key={a.id}>+ {a.name}{a.price > 0 ? ` (+$${Number(a.price).toFixed(2)})` : ""}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                     <span className="order-item-qty">x{item.quantity}</span>
                   </div>
                   <span className="order-item-price">
-                    {priceFormatter.format(Number(item.price) * item.quantity)}
+                    {priceFormatter.format(
+                      ((item.selectedAddons || []).reduce((s, a) => s + Number(a.price), 0) + Number(item.price)) * item.quantity,
+                    )}
                   </span>
                 </div>
               ))}
