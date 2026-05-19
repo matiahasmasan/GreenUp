@@ -1050,6 +1050,38 @@ app.get(
   },
 );
 
+// GET /orders/:id/review - get the review for a specific order (admin only)
+app.get(
+  "/orders/:id/review",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    if (isNaN(orderId)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+
+    try {
+      const [rows] = await pool.query(
+        `SELECT id, order_id, rating, comment, created_at
+         FROM order_reviews
+         WHERE order_id = ?
+         LIMIT 1`,
+        [orderId],
+      );
+
+      if (rows.length === 0) {
+        return res.status(404).json({ error: "No review for this order" });
+      }
+
+      res.json(rows[0]);
+    } catch (err) {
+      console.error("Failed to fetch order review", err);
+      res.status(500).json({ error: "Failed to fetch order review" });
+    }
+  },
+);
+
 // GET /order-reviews - list reviews (admin only)
 app.get(
   "/order-reviews",

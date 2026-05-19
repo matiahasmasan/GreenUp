@@ -28,11 +28,31 @@ export default function ViewOrderModal({
   const [profitLoading, setProfitLoading] = useState(false);
   const [profitError, setProfitError] = useState("");
 
+  // review data
+  const [orderReview, setOrderReview] = useState(null);
+
   useEffect(() => {
-    if (isOpen && isAdmin && selectedOrder?.id) {
-      fetchOrderProfit(selectedOrder.id);
+    if (isOpen && selectedOrder?.id) {
+      if (isAdmin) fetchOrderProfit(selectedOrder.id);
+      fetchOrderReview(selectedOrder.id);
     }
+    if (!isOpen) setOrderReview(null);
   }, [isOpen, isAdmin, selectedOrder?.id]);
+
+  const fetchOrderReview = async (orderId) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/orders/${orderId}/review`);
+      if (res.status === 404) {
+        setOrderReview(null);
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to fetch review");
+      const data = await res.json();
+      setOrderReview(data);
+    } catch {
+      setOrderReview(null);
+    }
+  };
 
   const fetchOrderProfit = async (orderId) => {
     try {
@@ -200,6 +220,38 @@ export default function ViewOrderModal({
               </table>
             </div>
           </div>
+          {/* Review Section */}
+          {orderReview ? (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <h3 className="text-base font-semibold text-gray-800 mb-3">
+                Customer Review
+              </h3>
+              <div className="flex items-center gap-2 mb-2">
+                {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
+                  <i
+                    key={n}
+                    className="fas fa-star"
+                    style={{
+                      color:
+                        orderReview.rating >= n
+                          ? "var(--green-500, #22c55e)"
+                          : "#d1d5db",
+                      fontSize: "0.9rem",
+                    }}
+                  />
+                ))}
+                <span className="text-sm text-gray-600 ml-1">
+                  {orderReview.rating}/5
+                </span>
+              </div>
+              {orderReview.comment ? (
+                <p className="text-gray-700 text-sm">{orderReview.comment}</p>
+              ) : (
+                <p className="text-gray-400 text-sm italic">No comment provided.</p>
+              )}
+            </div>
+          ) : null}
+
           {/* DOAR PENTRU ADMIN*/}
           {/* Profit Section */}
           {isAdmin && (
