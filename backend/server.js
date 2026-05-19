@@ -91,6 +91,19 @@ app.post("/auth/login", async (req, res) => {
   }
 });
 
+// GET /categories - public
+app.get("/categories", async (_req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, label FROM categories ORDER BY id ASC",
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch categories", err);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
 // GET /menu-items - public (clients need this)
 app.get("/menu-items", async (_req, res) => {
   try {

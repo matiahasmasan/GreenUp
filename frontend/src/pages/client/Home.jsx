@@ -2,12 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import Hero from "../../components/Hero";
 import MenuSection from "../../components/MenuSection";
 import SearchBar from "../../components/SearchBar";
-import CategoryTabs, { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
+import CategoryTabs from "../../components/CategoryTabs";
 
 const API_BASE_URL = "/api";
 
 export default function ClientHome({ onNavigate, onAddToCart }) {
   const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -20,11 +21,12 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
     async function fetchMenu() {
       try {
         setLoading(true);
-        const [menuRes, statsRes] = await Promise.all([
+        const [menuRes, statsRes, categoriesRes] = await Promise.all([
           fetch(`${API_BASE_URL}/menu-items`, { signal: controller.signal }),
           fetch(`${API_BASE_URL}/most-sold-items`, {
             signal: controller.signal,
           }),
+          fetch(`${API_BASE_URL}/categories`, { signal: controller.signal }),
         ]);
 
         if (!menuRes.ok) {
@@ -42,6 +44,11 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
         if (statsRes.ok) {
           const statsData = await statsRes.json();
           setMostSoldItems(statsData.map((item) => item.item_name));
+        }
+
+        if (categoriesRes.ok) {
+          const categoriesData = await categoriesRes.json();
+          setCategories(categoriesData.map((c) => ({ ...c, id: Number(c.id) })));
         }
 
         setError("");
@@ -74,9 +81,9 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
     const ids = Array.from(
       new Set(filteredItems.map((item) => item.category_id).filter(Boolean)),
     );
-    const order = CATEGORY_OPTIONS.map((option) => option.id);
+    const order = categories.map((c) => c.id);
     return ids.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-  }, [filteredItems]);
+  }, [filteredItems, categories]);
 
   useEffect(() => {
     if (!availableCategoryIds.length) {
@@ -111,6 +118,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
           activeCategory={activeCategory}
           onSelect={setActiveCategory}
           availableCategoryIds={availableCategoryIds}
+          categories={categories}
         />
       </div>
       <MenuSection
@@ -121,6 +129,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
         selectedCategory={activeCategory}
         onAddToCart={onAddToCart}
         mostSoldItems={mostSoldItems}
+        categories={categories}
       />
     </>
   );

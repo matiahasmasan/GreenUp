@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CATEGORY_OPTIONS } from "./CategoryTabs";
 import QuantityControl from "./QuantityControl";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -17,13 +16,14 @@ function MenuSection({
   selectedCategory,
   onAddToCart,
   mostSoldItems,
+  categories = [],
 }) {
   const sectionRefs = useRef({});
   const [expandedCard, setExpandedCard] = useState(null);
   const [quantity, setQuantity] = useState(1);
 
   const groupedSections = useMemo(() => {
-    const groups = CATEGORY_OPTIONS.map((option) => ({
+    const groups = categories.map((option) => ({
       id: option.id,
       label: option.label,
       items: menuItems.filter((item) => item.category_id === option.id),
@@ -39,7 +39,7 @@ function MenuSection({
     }
 
     return groups;
-  }, [menuItems]);
+  }, [menuItems, categories]);
 
   useEffect(() => {
     if (!selectedCategory) return;

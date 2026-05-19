@@ -3,12 +3,17 @@ export const CATEGORY_OPTIONS = [
   { id: 1, label: "Drinks" },
   { id: 2, label: "Appetizers" },
   { id: 3, label: "Mains" },
-  { id: 4, label: "Dessert" },
+  { id: 4, label: "dsa" },
 ];
 
-function CategoryTabs({ activeCategory, onSelect, availableCategoryIds = [] }) {
-  const categories = CATEGORY_OPTIONS.filter((option) =>
-    availableCategoryIds.includes(option.id)
+function CategoryTabs({
+  activeCategory,
+  onSelect,
+  availableCategoryIds = [],
+  categories = CATEGORY_OPTIONS,
+}) {
+  const visibleCategories = categories.filter((option) =>
+    availableCategoryIds.includes(option.id),
   );
 
   return (
@@ -18,7 +23,7 @@ function CategoryTabs({ activeCategory, onSelect, availableCategoryIds = [] }) {
         role="tablist"
         aria-label="Menu categories"
       >
-        {categories.map((category) => (
+        {visibleCategories.map((category) => (
           <button
             key={category.id}
             type="button"
