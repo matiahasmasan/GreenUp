@@ -1057,7 +1057,7 @@ app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
     const [profitRows] = await pool.query(
       `
       SELECT
-        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as total_profit,
+        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0) + COALESCE((SELECT SUM(oia.addon_price) FROM order_item_addons oia WHERE oia.order_item_id = oi.id), 0))) as total_profit,
         COUNT(DISTINCT o.id) as order_count
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
@@ -1104,7 +1104,7 @@ app.get(
     try {
       const [result] = await pool.query(
         `SELECT 
-        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as profit
+        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0) + COALESCE((SELECT SUM(oia.addon_price) FROM order_item_addons oia WHERE oia.order_item_id = oi.id), 0))) as profit
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items m ON oi.item_name = m.name
