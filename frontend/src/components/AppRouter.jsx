@@ -21,6 +21,8 @@ export default function AppRouter({
   onRemoveItem,
   onSetLastOrder,
   onClearCart,
+  kitchenNote,
+  onSetKitchenNote,
 }) {
   const { user, isLoading } = useAuth();
 
@@ -51,6 +53,8 @@ export default function AppRouter({
         onUpdateQuantity={onUpdateQuantity}
         onRemoveItem={onRemoveItem}
         onNavigate={onNavigate}
+        kitchenNote={kitchenNote}
+        onSetKitchenNote={onSetKitchenNote}
       />
     );
   }
@@ -62,6 +66,8 @@ export default function AppRouter({
         onNavigate={onNavigate}
         onSetLastOrder={onSetLastOrder}
         onClearCart={onClearCart}
+        kitchenNote={kitchenNote}
+        onSetKitchenNote={onSetKitchenNote}
       />
     );
   }

@@ -12,10 +12,12 @@ export default function Cart({
   onUpdateQuantity,
   onRemoveItem,
   onNavigate,
+  kitchenNote,
+  onSetKitchenNote,
 }) {
   const total = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
-    0
+    0,
   );
 
   if (cartItems.length === 0) {
@@ -45,52 +47,56 @@ export default function Cart({
           {cartItems.map((item) => {
             const stock = item.stocks != null ? Number(item.stocks) : null;
             const isAtStockLimit =
-              stock !== null && Number.isFinite(stock) && item.quantity >= stock;
+              stock !== null &&
+              Number.isFinite(stock) &&
+              item.quantity >= stock;
 
             return (
-            <div key={item.cartKey} className="cart-item">
-              {item.image_url && (
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  className="cart-item-image"
-                />
-              )}
-
-              <div className="cart-item-content">
-                <div className="cart-item-header">
-                  <h3>{item.name}</h3>
-                  <button
-                    onClick={() => onRemoveItem(item.cartKey)}
-                    className="cart-remove-btn"
-                    aria-label="Remove item"
-                  >
-                    <i className="fas fa-trash-alt"></i>
-                  </button>
-                </div>
-                <p className="menu-description">{item.description}</p>
-
-                <div className="cart-item-footer">
-                  <QuantityControl
-                    quantity={item.quantity}
-                    onDecrease={() =>
-                      onUpdateQuantity(item.cartKey, item.quantity - 1)
-                    }
-                    onIncrease={() =>
-                      onUpdateQuantity(item.cartKey, item.quantity + 1)
-                    }
-                    disableIncrease={isAtStockLimit}
-                    maxMessage={
-                      isAtStockLimit ? `Max available: ${stock}` : null
-                    }
+              <div key={item.cartKey} className="cart-item">
+                {item.image_url && (
+                  <img
+                    src={item.image_url}
+                    alt={item.name}
+                    className="cart-item-image"
                   />
+                )}
 
-                  <p className="price">
-                    {priceFormatter.format(Number(item.price) * item.quantity)}
-                  </p>
+                <div className="cart-item-content">
+                  <div className="cart-item-header">
+                    <h3>{item.name}</h3>
+                    <button
+                      onClick={() => onRemoveItem(item.cartKey)}
+                      className="cart-remove-btn"
+                      aria-label="Remove item"
+                    >
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                  <p className="menu-description">{item.description}</p>
+
+                  <div className="cart-item-footer">
+                    <QuantityControl
+                      quantity={item.quantity}
+                      onDecrease={() =>
+                        onUpdateQuantity(item.cartKey, item.quantity - 1)
+                      }
+                      onIncrease={() =>
+                        onUpdateQuantity(item.cartKey, item.quantity + 1)
+                      }
+                      disableIncrease={isAtStockLimit}
+                      maxMessage={
+                        isAtStockLimit ? `Max available: ${stock}` : null
+                      }
+                    />
+
+                    <p className="price">
+                      {priceFormatter.format(
+                        Number(item.price) * item.quantity,
+                      )}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
             );
           })}
         </div>
@@ -105,6 +111,22 @@ export default function Cart({
           <p className="cart-summary-note">
             Shipping and taxes calculated at checkout
           </p>
+
+          <div className="cart-note">
+            <label htmlFor="kitchen-note" className="cart-note-label">
+              Note for the kitchen
+            </label>
+            <textarea
+              id="kitchen-note"
+              className="cart-note-input"
+              rows={3}
+              placeholder="e.g. No ice in the Cola…"
+              value={kitchenNote}
+              onChange={(e) => onSetKitchenNote(e.target.value)}
+              maxLength={500}
+            />
+          </div>
+
           <button
             className="add-to-cart"
             onClick={() => onNavigate && onNavigate("checkout")}

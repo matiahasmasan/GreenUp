@@ -17,6 +17,7 @@ function AppContent() {
     }
   });
   const [lastOrder, setLastOrder] = useState(null);
+  const [kitchenNote, setKitchenNote] = useState("");
 
   // Cart management
   const {
@@ -52,6 +53,8 @@ function AppContent() {
         onRemoveItem={removeFromCart}
         onSetLastOrder={setLastOrder}
         onClearCart={clearCart}
+        kitchenNote={kitchenNote}
+        onSetKitchenNote={setKitchenNote}
       />
       <FooterBar onNavigate={handleNavigate} cartItemCount={cartItemCount} />
     </div>

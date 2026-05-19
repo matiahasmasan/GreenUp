@@ -11,6 +11,8 @@ export default function Checkout({
   onNavigate,
   onSetLastOrder,
   onClearCart,
+  kitchenNote = "",
+  onSetKitchenNote,
 }) {
   // read `table` param from URL to simulate QR selection (e.g. ?table=1)
   const params =
@@ -27,7 +29,7 @@ export default function Checkout({
 
   const total = cartItems.reduce(
     (sum, item) => sum + Number(item.price) * item.quantity,
-    0
+    0,
   );
 
   const isFormValid = () => {
@@ -74,6 +76,7 @@ export default function Checkout({
           paymentMethod,
           items: cartItems,
           total,
+          kitchenNote: kitchenNote.trim() || null,
         }),
       });
 
@@ -96,6 +99,7 @@ export default function Checkout({
       onSetLastOrder && onSetLastOrder(order);
       // clear the cart now that order is placed
       onClearCart && onClearCart();
+      onSetKitchenNote && onSetKitchenNote("");
       // show a brief non-blocking success message before navigating
       setStatus({ type: "success", text: "Order placed successfully!" });
       // navigate to confirmed page
@@ -246,6 +250,17 @@ export default function Checkout({
                 </div>
               ))}
             </div>
+
+            {kitchenNote.trim() && (
+              <div className="checkout-kitchen-note mb-2">
+                <span className="checkout-kitchen-note-label">
+                  <i className="fas fa-utensils"></i> Kitchen note
+                </span>
+                <p className="checkout-kitchen-note-text">
+                  {kitchenNote.trim()}
+                </p>
+              </div>
+            )}
 
             <div className="order-summary">
               <div className="summary-row total">
