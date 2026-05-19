@@ -1,9 +1,13 @@
+import { useState, useEffect } from "react";
 import Modal from "./common/Modal";
+import { authFetch } from "../utils/authUtils";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
 });
+
+const API_BASE_URL = "/api";
 
 export default function ViewProductModal({
   isOpen,
@@ -14,6 +18,19 @@ export default function ViewProductModal({
   isAdmin = false,
   categories = [],
 }) {
+  const [addons, setAddons] = useState([]);
+  const [addonsLoading, setAddonsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedProduct) return;
+    setAddons([]);
+    setAddonsLoading(true);
+    authFetch(`${API_BASE_URL}/menu-items/${selectedProduct.id}/addons`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setAddons(Array.isArray(data) ? data : []))
+      .catch(() => setAddons([]))
+      .finally(() => setAddonsLoading(false));
+  }, [selectedProduct]);
   const getCategoryLabel = (categoryId) => {
     if (!categoryId) return "Uncategorized";
     const category = categories.find((opt) => opt.id === categoryId);
@@ -182,52 +199,48 @@ export default function ViewProductModal({
           )}
 
           {/* Add-ons */}
-          {selectedProduct.addons?.length > 0 && (
-            <div>
-              <p className="text-sm font-semibold text-gray-600 mb-2">
-                Add-ons ({selectedProduct.addons.length})
-              </p>
-              <div className="space-y-2">
-                {selectedProduct.addons.map((addon) => (
-                  <div
-                    key={addon.id}
-                    className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
-                  >
-                    <span className="text-gray-800 text-sm">{addon.name}</span>
-                    <div className="flex items-center gap-2">
-                      {addon.price > 0 && (
-                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
-                          +{priceFormatter.format(Number(addon.price))}
-                        </span>
-                      )}
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                          addon.is_available === 1 ||
-                          addon.is_available === true
-                            ? "bg-green-50 text-green-700"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        {addon.is_available === 1 || addon.is_available === true
-                          ? "Available"
-                          : "Unavailable"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {selectedProduct.addons?.length === 0 && (
-            <div>
-              <p className="text-sm font-semibold text-gray-600 mb-2">
-                Add-ons
-              </p>
+          <div>
+            <p className="text-sm font-semibold text-gray-600 mb-2">
+              Add-ons{addons.length > 0 && ` (${addons.length})`}
+            </p>
+            {addonsLoading ? (
+              <p className="text-sm text-gray-400">Loading…</p>
+            ) : addons.length === 0 ? (
               <p className="text-sm text-gray-400 italic">
                 No add-ons configured for this product.
               </p>
-            </div>
-          )}
+            ) : (
+              <div className="space-y-2">
+                {addons.map((addon) => {
+                  const isAvail = Number(addon.is_available) === 1;
+                  return (
+                    <div
+                      key={addon.id}
+                      className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      <span className="text-gray-800 text-sm">{addon.name}</span>
+                      <div className="flex items-center gap-2">
+                        {Number(addon.price) > 0 && (
+                          <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                            +{priceFormatter.format(Number(addon.price))}
+                          </span>
+                        )}
+                        <span
+                          className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                            isAvail
+                              ? "bg-green-50 text-green-700"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          {isAvail ? "Available" : "Unavailable"}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </Modal>
