@@ -1,6 +1,5 @@
-import { ChevronDown, Filter, Package } from "lucide-react";
+import { ChevronDown, Package } from "lucide-react";
 import SearchBar from "./SearchBar";
-import { CATEGORY_OPTIONS } from "./CategoryTabs";
 
 export default function ProductFilters({
   searchTerm,
@@ -9,6 +8,7 @@ export default function ProductFilters({
   onCategoryChange,
   filterAvailability,
   onAvailabilityChange,
+  categories = [],
 }) {
   return (
     <div className="mt-4 space-y-3">
@@ -34,7 +34,7 @@ export default function ProductFilters({
               className="w-full pl-10 pr-8 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed transition-colors appearance-none bg-white"
             >
               <option value="">All Categories</option>
-              {CATEGORY_OPTIONS.map((cat) => (
+              {categories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
                   {cat.label}
                 </option>

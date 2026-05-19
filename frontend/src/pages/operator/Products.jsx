@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import { authFetch } from "../../utils/authUtils";
 import "../../App.css";
 import Pagination from "../../components/common/Pagination";
-import { CATEGORY_OPTIONS } from "../../components/CategoryTabs";
 import EditProductModal from "../../components/EditProductModal";
 import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
@@ -15,6 +14,7 @@ const API_BASE_URL = "/api";
 
 export default function OperatorProducts() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,7 +39,20 @@ export default function OperatorProducts() {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  async function fetchCategories() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/categories`);
+      if (res.ok) {
+        const data = await res.json();
+        setCategories(data.map((c) => ({ ...c, id: Number(c.id) })));
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories", err);
+    }
+  }
 
   async function fetchProducts() {
     try {
@@ -241,7 +254,7 @@ export default function OperatorProducts() {
 
   const getCategoryLabel = (categoryId) => {
     if (!categoryId) return "Uncategorized";
-    const category = CATEGORY_OPTIONS.find((opt) => opt.id === categoryId);
+    const category = categories.find((opt) => opt.id === categoryId);
     return category ? category.label : "Unknown";
   };
 
@@ -279,6 +292,7 @@ export default function OperatorProducts() {
           setFilterAvailability(value);
           setCurrentPage(1);
         }}
+        categories={categories}
       />
 
       {loading && <p className="text-gray-500 mt-4">Loading products...</p>}
@@ -383,6 +397,7 @@ export default function OperatorProducts() {
         loading={false}
         error={productError}
         isAdmin={isAdmin}
+        categories={categories}
       />
       {/* Edit Product Modal */}
       <EditProductModal
@@ -392,6 +407,7 @@ export default function OperatorProducts() {
         loading={editLoading}
         error={productError}
         onSave={handleUpdateProduct}
+        categories={categories}
       />
       <CreateProductModal
         isOpen={createModalOpen}
@@ -402,6 +418,7 @@ export default function OperatorProducts() {
         onSave={handleCreateProduct}
         loading={createLoading}
         error={productError}
+        categories={categories}
       />
       <DeleteProductModal
         isOpen={deleteModalOpen}
@@ -410,6 +427,7 @@ export default function OperatorProducts() {
         deleteLoading={deleteLoading}
         deleteError={productError}
         onConfirmDelete={handleConfirmDelete}
+        categories={categories}
       />
     </div>
   );
