@@ -265,7 +265,23 @@ export default function EditOrderModal({
                       key={index}
                       className={`border-b border-gray-200 ${index % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
                     >
-                      <td className="px-3 py-3 text-gray-800">{item.name}</td>
+                      <td className="px-3 py-3 text-gray-800">
+                        <span>{item.name}</span>
+                        {item.addons?.length > 0 && (
+                          <ul className="mt-1 space-y-0.5">
+                            {item.addons.map((a, i) => (
+                              <li key={i} className="text-xs text-gray-500">
+                                + {a.name}
+                                {parseFloat(a.price) > 0 && (
+                                  <span className="ml-1 text-green-600">
+                                    (+${parseFloat(a.price).toFixed(2)})
+                                  </span>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </td>
                       <td className="px-3 py-3">
                         <div className="flex items-center justify-center gap-2">
                           <button
