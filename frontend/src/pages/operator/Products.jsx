@@ -7,6 +7,7 @@ import ViewProductModal from "../../components/ViewProductModal";
 import ProductFilters from "../../components/ProductFilters";
 import CreateProductModal from "../../components/CreateProductModal";
 import DeleteProductModal from "../../components/DeleteProductModal";
+import AddonFilter from "../../components/AddonFilter";
 import { useAuth } from "../../context/AuthContext";
 
 const API_BASE_URL = "/api";
@@ -21,6 +22,8 @@ export default function OperatorProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState(null);
   const [filterAvailability, setFilterAvailability] = useState(null);
+  const [showOnlyWithAddons, setShowOnlyWithAddons] = useState(false);
+  const [productsWithAddons, setProductsWithAddons] = useState(new Set());
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [productError, setProductError] = useState("");
   const productsPerPage = 5;
@@ -54,6 +57,34 @@ export default function OperatorProducts() {
     }
   }
 
+  async function fetchProductAddons() {
+    try {
+      const addonProductIds = new Set();
+      // Fetch addons for each product to determine which have addons
+      for (const product of products) {
+        try {
+          const res = await authFetch(
+            `${API_BASE_URL}/menu-items/${product.id}/addons`,
+          );
+          if (res.ok) {
+            const addons = await res.json();
+            if (addons && addons.length > 0) {
+              addonProductIds.add(product.id);
+            }
+          }
+        } catch (err) {
+          console.error(
+            `Failed to fetch addons for product ${product.id}`,
+            err,
+          );
+        }
+      }
+      setProductsWithAddons(addonProductIds);
+    } catch (err) {
+      console.error("Failed to fetch product addons", err);
+    }
+  }
+
   async function fetchProducts() {
     try {
       setLoading(true);
@@ -64,18 +95,46 @@ export default function OperatorProducts() {
       }
 
       const data = await res.json();
-      setProducts(
-        data.map((item) => ({
-          ...item,
-          category_id: item.category_id ? Number(item.category_id) : null,
-        }))
-      );
+      const productsData = data.map((item) => ({
+        ...item,
+        category_id: item.category_id ? Number(item.category_id) : null,
+      }));
+      setProducts(productsData);
       setError("");
+      // Fetch addon information after products are loaded
+      await fetchProductAddonsForProducts(productsData);
     } catch (err) {
       setError(err.message || "Failed to load products");
       console.error("Error:", err);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchProductAddonsForProducts(productsData) {
+    try {
+      const addonProductIds = new Set();
+      for (const product of productsData) {
+        try {
+          const res = await authFetch(
+            `${API_BASE_URL}/menu-items/${product.id}/addons`,
+          );
+          if (res.ok) {
+            const addons = await res.json();
+            if (addons && addons.length > 0) {
+              addonProductIds.add(product.id);
+            }
+          }
+        } catch (err) {
+          console.error(
+            `Failed to fetch addons for product ${product.id}`,
+            err,
+          );
+        }
+      }
+      setProductsWithAddons(addonProductIds);
+    } catch (err) {
+      console.error("Failed to fetch product addons", err);
     }
   }
 
@@ -106,20 +165,24 @@ export default function OperatorProducts() {
       setEditLoading(true);
       setProductError("");
 
-      const res = await authFetch(`${API_BASE_URL}/menu-items/${selectedProduct.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: formData.name,
-          description: formData.description,
-          price: Number(formData.price),
-          cost_price: formData.cost_price !== "" ? Number(formData.cost_price) : null,
-          image_url: formData.image_url,
-          category_id: Number(formData.category_id),
-          is_available: formData.is_available,
-          stocks: Number(formData.stocks),
-        }),
-      });
+      const res = await authFetch(
+        `${API_BASE_URL}/menu-items/${selectedProduct.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            price: Number(formData.price),
+            cost_price:
+              formData.cost_price !== "" ? Number(formData.cost_price) : null,
+            image_url: formData.image_url,
+            category_id: Number(formData.category_id),
+            is_available: formData.is_available,
+            stocks: Number(formData.stocks),
+          }),
+        },
+      );
 
       if (!res.ok) {
         const errorData = await res.json();
@@ -236,12 +299,24 @@ export default function OperatorProducts() {
       filtered = filtered.filter(
         (item) =>
           (item.is_available === 1 || item.is_available === true) ===
-          isAvailable
+          isAvailable,
       );
     }
 
+    // Addon filter
+    if (showOnlyWithAddons) {
+      filtered = filtered.filter((item) => productsWithAddons.has(item.id));
+    }
+
     return filtered;
-  }, [products, searchTerm, filterCategory, filterAvailability]);
+  }, [
+    products,
+    searchTerm,
+    filterCategory,
+    filterAvailability,
+    showOnlyWithAddons,
+    productsWithAddons,
+  ]);
 
   // PAGINATION LOGIC
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
@@ -249,7 +324,7 @@ export default function OperatorProducts() {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(
     indexOfFirstProduct,
-    indexOfLastProduct
+    indexOfLastProduct,
   );
 
   const getCategoryLabel = (categoryId) => {
@@ -294,6 +369,17 @@ export default function OperatorProducts() {
         }}
         categories={categories}
       />
+
+      {/* Addon Filter */}
+      <div className="mt-4">
+        <AddonFilter
+          showOnlyWithAddons={showOnlyWithAddons}
+          onToggle={(value) => {
+            setShowOnlyWithAddons(value);
+            setCurrentPage(1);
+          }}
+        />
+      </div>
 
       {loading && <p className="text-gray-500 mt-4">Loading products...</p>}
 
@@ -402,7 +488,10 @@ export default function OperatorProducts() {
       {/* Edit Product Modal */}
       <EditProductModal
         isOpen={editModalOpen}
-        onClose={() => { setEditModalOpen(false); setProductError(""); }}
+        onClose={() => {
+          setEditModalOpen(false);
+          setProductError("");
+        }}
         selectedProduct={selectedProduct}
         loading={editLoading}
         error={productError}
