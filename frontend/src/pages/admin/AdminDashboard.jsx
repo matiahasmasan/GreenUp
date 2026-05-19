@@ -151,7 +151,10 @@ export default function AdminDashboard() {
           icon="fas fa-piggy-bank"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: stats.profitMargin >= 0, value: `${stats.profitMargin}%` }}
+          trend={{
+            positive: stats.profitMargin >= 0,
+            value: `${stats.profitMargin}%`,
+          }}
         />
       </div>
 

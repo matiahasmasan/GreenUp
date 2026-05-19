@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import Modal from "./common/Modal";
+import { authFetch } from "../utils/authUtils";
+
+const API_BASE_URL = "/api";
 
 export default function EditProductModal({
   isOpen,
@@ -23,6 +26,77 @@ export default function EditProductModal({
 
   const [formErrors, setFormErrors] = useState({});
 
+  // Add-ons state
+  const [addons, setAddons] = useState([]);
+  const [addonsLoading, setAddonsLoading] = useState(false);
+  const [addonsError, setAddonsError] = useState(null);
+  const [newAddonName, setNewAddonName] = useState("");
+  const [newAddonPrice, setNewAddonPrice] = useState("");
+  const [addingAddon, setAddingAddon] = useState(false);
+
+  const fetchAddons = async (productId) => {
+    setAddonsLoading(true);
+    setAddonsError(null);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/menu-items/${productId}/addons`);
+      if (!res.ok) throw new Error("Failed to load add-ons");
+      const data = await res.json();
+      setAddons(data);
+    } catch (err) {
+      setAddonsError(err.message);
+    } finally {
+      setAddonsLoading(false);
+    }
+  };
+
+  const handleCreateAddon = async () => {
+    if (!newAddonName.trim()) return;
+    const price = newAddonPrice === "" ? 0 : Number(newAddonPrice);
+    if (isNaN(price) || price < 0) return;
+    setAddingAddon(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/menu-items/${selectedProduct.id}/addons`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newAddonName.trim(), price }),
+      });
+      if (!res.ok) throw new Error("Failed to create add-on");
+      const created = await res.json();
+      setAddons((prev) => [...prev, { id: created.id, name: newAddonName.trim(), price, is_available: 1 }]);
+      setNewAddonName("");
+      setNewAddonPrice("");
+    } catch (err) {
+      setAddonsError(err.message);
+    } finally {
+      setAddingAddon(false);
+    }
+  };
+
+  const handleToggleAddon = async (addon) => {
+    const newVal = addon.is_available === 1 || addon.is_available === true ? 0 : 1;
+    try {
+      const res = await authFetch(`${API_BASE_URL}/product-addons/${addon.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_available: newVal }),
+      });
+      if (!res.ok) throw new Error("Failed to update add-on");
+      setAddons((prev) => prev.map((a) => a.id === addon.id ? { ...a, is_available: newVal } : a));
+    } catch (err) {
+      setAddonsError(err.message);
+    }
+  };
+
+  const handleDeleteAddon = async (addonId) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/product-addons/${addonId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete add-on");
+      setAddons((prev) => prev.filter((a) => a.id !== addonId));
+    } catch (err) {
+      setAddonsError(err.message);
+    }
+  };
+
   useEffect(() => {
     if (selectedProduct) {
       setFormData({
@@ -38,6 +112,11 @@ export default function EditProductModal({
         stocks: selectedProduct.stocks ?? "",
       });
       setFormErrors({});
+      setAddons([]);
+      setAddonsError(null);
+      setNewAddonName("");
+      setNewAddonPrice("");
+      fetchAddons(selectedProduct.id);
     }
   }, [selectedProduct]);
 
@@ -365,6 +444,97 @@ export default function EditProductModal({
               Auto-disabled: stock is 0. You can still enable it manually.
             </p>
           )}
+        </div>
+
+        {/* Add-ons Section */}
+        <div className="pt-2 border-t border-gray-200">
+          <p className="text-sm font-semibold text-gray-700 mb-3">
+            Add-ons
+            <span className="text-xs font-normal text-gray-400 ml-1">(changes apply immediately)</span>
+          </p>
+
+          {addonsError && (
+            <p className="text-red-500 text-sm mb-2">{addonsError}</p>
+          )}
+
+          {addonsLoading ? (
+            <p className="text-sm text-gray-400">Loading add-ons…</p>
+          ) : (
+            <div className="space-y-2 mb-3">
+              {addons.length === 0 && (
+                <p className="text-sm text-gray-400 italic">No add-ons yet.</p>
+              )}
+              {addons.map((addon) => {
+                const isAvail = addon.is_available === 1 || addon.is_available === true;
+                return (
+                  <div
+                    key={addon.id}
+                    className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className="text-sm text-gray-800 truncate">{addon.name}</span>
+                      {Number(addon.price) > 0 && (
+                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded whitespace-nowrap">
+                          +${Number(addon.price).toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 ml-2 shrink-0">
+                      <button
+                        type="button"
+                        title={isAvail ? "Disable" : "Enable"}
+                        onClick={() => handleToggleAddon(addon)}
+                        className={`text-xs font-semibold px-2 py-0.5 rounded border transition ${
+                          isAvail
+                            ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                            : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                        }`}
+                      >
+                        {isAvail ? "On" : "Off"}
+                      </button>
+                      <button
+                        type="button"
+                        title="Delete add-on"
+                        onClick={() => handleDeleteAddon(addon.id)}
+                        className="text-red-400 hover:text-red-600 transition p-1"
+                      >
+                        <i className="fas fa-trash-alt text-xs"></i>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* New add-on row */}
+          <div className="flex gap-2 items-start">
+            <input
+              type="text"
+              placeholder="Add-on name"
+              value={newAddonName}
+              onChange={(e) => setNewAddonName(e.target.value)}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCreateAddon(); } }}
+            />
+            <input
+              type="number"
+              placeholder="Price"
+              value={newAddonPrice}
+              onChange={(e) => setNewAddonPrice(e.target.value)}
+              min="0"
+              step="0.01"
+              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            />
+            <button
+              type="button"
+              onClick={handleCreateAddon}
+              disabled={addingAddon || !newAddonName.trim()}
+              className="px-3 py-2 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600 transition font-semibold disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+            >
+              {addingAddon ? "…" : <><i className="fas fa-plus mr-1"></i>Add</>}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

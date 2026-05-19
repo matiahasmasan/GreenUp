@@ -113,14 +113,14 @@ export default function ViewProductModal({
                   {priceFormatter.format(
                     calculateProfitMargin(
                       selectedProduct.price,
-                      selectedProduct.cost_price
-                    ).profit
+                      selectedProduct.cost_price,
+                    ).profit,
                   )}
                   <span className="text-sm ml-1">
                     (
                     {calculateProfitMargin(
                       selectedProduct.price,
-                      selectedProduct.cost_price
+                      selectedProduct.cost_price,
                     ).margin.toFixed(2)}
                     %)
                   </span>
@@ -178,6 +178,54 @@ export default function ViewProductModal({
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-700">{selectedProduct.description}</p>
               </div>
+            </div>
+          )}
+
+          {/* Add-ons */}
+          {selectedProduct.addons?.length > 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-2">
+                Add-ons ({selectedProduct.addons.length})
+              </p>
+              <div className="space-y-2">
+                {selectedProduct.addons.map((addon) => (
+                  <div
+                    key={addon.id}
+                    className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <span className="text-gray-800 text-sm">{addon.name}</span>
+                    <div className="flex items-center gap-2">
+                      {addon.price > 0 && (
+                        <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded">
+                          +{priceFormatter.format(Number(addon.price))}
+                        </span>
+                      )}
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                          addon.is_available === 1 ||
+                          addon.is_available === true
+                            ? "bg-green-50 text-green-700"
+                            : "bg-red-50 text-red-600"
+                        }`}
+                      >
+                        {addon.is_available === 1 || addon.is_available === true
+                          ? "Available"
+                          : "Unavailable"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {selectedProduct.addons?.length === 0 && (
+            <div>
+              <p className="text-sm font-semibold text-gray-600 mb-2">
+                Add-ons
+              </p>
+              <p className="text-sm text-gray-400 italic">
+                No add-ons configured for this product.
+              </p>
             </div>
           )}
         </div>
