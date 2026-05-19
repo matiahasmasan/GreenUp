@@ -1082,6 +1082,35 @@ app.get(
   },
 );
 
+// DELETE /orders/:id/review - delete the review for a specific order (admin only)
+app.delete(
+  "/orders/:id/review",
+  authenticateToken,
+  requireRole("admin"),
+  async (req, res) => {
+    const orderId = parseInt(req.params.id);
+    if (isNaN(orderId)) {
+      return res.status(400).json({ error: "Invalid order ID" });
+    }
+
+    try {
+      const [result] = await pool.query(
+        "DELETE FROM order_reviews WHERE order_id = ?",
+        [orderId],
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ error: "No review found for this order" });
+      }
+
+      res.json({ success: true, message: "Review deleted successfully" });
+    } catch (err) {
+      console.error("Failed to delete order review", err);
+      res.status(500).json({ error: "Failed to delete review" });
+    }
+  },
+);
+
 // GET /order-reviews - list reviews (admin only)
 app.get(
   "/order-reviews",

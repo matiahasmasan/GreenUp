@@ -1,5 +1,8 @@
 import Modal from "./common/Modal";
 import { useState, useEffect } from "react";
+import { authFetch } from "../utils/authUtils";
+
+const API_BASE_URL = "/api";
 
 export default function EditOrderModal({
   isOpen,
@@ -19,6 +22,40 @@ export default function EditOrderModal({
   const [newItemPrice, setNewItemPrice] = useState("");
   const [newItemQty, setNewItemQty] = useState(1);
   const [addingItem, setAddingItem] = useState(false);
+  const [orderReview, setOrderReview] = useState(null);
+  const [deleteReviewLoading, setDeleteReviewLoading] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && selectedOrder?.id) {
+      fetchReview(selectedOrder.id);
+    }
+    if (!isOpen) setOrderReview(null);
+  }, [isOpen, selectedOrder?.id]);
+
+  const fetchReview = async (orderId) => {
+    try {
+      const res = await authFetch(`${API_BASE_URL}/orders/${orderId}/review`);
+      if (res.status === 404) { setOrderReview(null); return; }
+      if (!res.ok) return;
+      setOrderReview(await res.json());
+    } catch {
+      setOrderReview(null);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!selectedOrder?.id) return;
+    try {
+      setDeleteReviewLoading(true);
+      const res = await authFetch(`${API_BASE_URL}/orders/${selectedOrder.id}/review`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete review");
+      setOrderReview(null);
+    } catch {
+      // silently fail — review stays visible
+    } finally {
+      setDeleteReviewLoading(false);
+    }
+  };
 
   // Sync form state when order changes
   useEffect(() => {
@@ -385,6 +422,40 @@ export default function EditOrderModal({
               </p>
             )}
           </div>
+
+          {/* Review Section */}
+          {orderReview && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-base font-semibold text-gray-800">Customer Review</h3>
+                <button
+                  onClick={handleDeleteReview}
+                  disabled={deleteReviewLoading}
+                  className="text-sm text-red-500 hover:text-red-700 font-semibold disabled:opacity-50 transition"
+                >
+                  {deleteReviewLoading ? "Deleting..." : "Delete Review"}
+                </button>
+              </div>
+              <div className="flex items-center gap-1 mb-2">
+                {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
+                  <i
+                    key={n}
+                    className="fas fa-star"
+                    style={{
+                      color: orderReview.rating >= n ? "var(--green-500, #22c55e)" : "#d1d5db",
+                      fontSize: "0.9rem",
+                    }}
+                  />
+                ))}
+                <span className="text-sm text-gray-600 ml-1">{orderReview.rating}/5</span>
+              </div>
+              {orderReview.comment ? (
+                <p className="text-gray-700 text-sm">{orderReview.comment}</p>
+              ) : (
+                <p className="text-gray-400 text-sm italic">No comment provided.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </Modal>
