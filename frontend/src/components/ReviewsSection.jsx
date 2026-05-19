@@ -1,8 +1,18 @@
 import React, { useState, useMemo } from "react";
 import Pagination from "./common/Pagination";
+import ViewOrderModal from "./ViewOrderModal";
+import { useOrderModal } from "../hooks/useOrderModal";
 
 export default function ReviewsSection({ reviews, loading, error }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const {
+    viewModalOpen,
+    selectedOrder,
+    orderLoading,
+    orderError,
+    handleView,
+    handleCloseViewModal,
+  } = useOrderModal("/api");
   const itemsPerPage = 3;
 
   // Calculate average rating
@@ -38,31 +48,30 @@ export default function ReviewsSection({ reviews, loading, error }) {
 
   return (
     <div className="checkout-section mt-4">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center">
         <h2 className="checkout-section-title mb-0">Order Reviews</h2>
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1">
-            {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
-              <i
-                key={n}
-                className="fas fa-star"
-                aria-hidden="true"
-                style={{
-                  color:
-                    Number(averageRating) >= n
-                      ? "var(--green-500)"
-                      : "var(--gray-300)",
-                  fontSize: "0.85rem",
-                }}
-              />
-            ))}
-          </div>
-          <span style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
-            {averageRating} avg ({reviews.length} reviews)
-          </span>
-        </div>
       </div>
-
+      <div className="flex items-center gap-2 mb-4">
+        <div className="flex gap-1">
+          {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
+            <i
+              key={n}
+              className="fas fa-star"
+              aria-hidden="true"
+              style={{
+                color:
+                  Number(averageRating) >= n
+                    ? "var(--green-500)"
+                    : "var(--gray-300)",
+                fontSize: "0.85rem",
+              }}
+            />
+          ))}
+        </div>
+        <span style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+          {averageRating} avg ({reviews.length} reviews)
+        </span>
+      </div>
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="p-4" style={{ display: "grid", gap: "0.75rem" }}>
           {paginatedReviews.map((r) => (
@@ -84,7 +93,7 @@ export default function ReviewsSection({ reviews, loading, error }) {
                   marginBottom: "0.5rem",
                 }}
               >
-                <div style={{ display: "flex", gap: "0.35rem" }}>
+                <div style={{ display: "flex", gap: "0.35rem", alignItems: "center" }}>
                   {Array.from({ length: 5 }, (_, i) => i + 1).map((n) => (
                     <i
                       key={n}
@@ -103,19 +112,34 @@ export default function ReviewsSection({ reviews, loading, error }) {
                   </span>
                 </div>
 
-                <div style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
-                  Order #{r.order_id} • Table {r.table_number} •{" "}
-                  {r.customer_name}
-                  {r.created_at ? (
-                    <>
-                      {" "}
-                      •{" "}
-                      {new Date(r.created_at).toLocaleString("ro-RO", {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}
-                    </>
-                  ) : null}
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ color: "var(--gray-600)", fontSize: "0.9rem" }}>
+                    {r.customer_name}
+                    {r.created_at ? (
+                      <>
+                        {" "}•{" "}
+                        {new Date(r.created_at).toLocaleDateString("ro-RO", {
+                          dateStyle: "medium",
+                        })}
+                      </>
+                    ) : null}
+                  </div>
+                  <button
+                    onClick={() => handleView(r.order_id)}
+                    style={{
+                      fontSize: "0.8rem",
+                      padding: "0.25rem 0.65rem",
+                      borderRadius: "0.5rem",
+                      border: "1px solid var(--green-500)",
+                      color: "var(--green-600)",
+                      background: "transparent",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <i className="fas fa-eye" style={{ marginRight: "0.3rem" }} />
+                    View
+                  </button>
                 </div>
               </div>
 
@@ -143,6 +167,15 @@ export default function ReviewsSection({ reviews, loading, error }) {
           />
         </div>
       )}
+
+      <ViewOrderModal
+        isOpen={viewModalOpen}
+        onClose={handleCloseViewModal}
+        selectedOrder={selectedOrder}
+        loading={orderLoading}
+        error={orderError}
+        isAdmin={true}
+      />
     </div>
   );
 }

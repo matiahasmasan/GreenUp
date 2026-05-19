@@ -41,9 +41,6 @@ export default function MetricCard({
                 className={`fas fa-arrow-${trend.positive ? "up" : "down"}`}
               ></i>
               <span className="font-medium">{trend.value}</span>
-              <span className="text-gray-500 hidden sm:inline">
-                vs yesterday
-              </span>
             </div>
           )}
         </div>
