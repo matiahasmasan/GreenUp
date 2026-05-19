@@ -891,26 +891,36 @@ app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
       params,
     );
 
+    const profitDateCondition = dateCondition.replace(/created_at/g, "o.created_at");
+
     const [profitRows] = await pool.query(
       `
-      SELECT 
-        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as total_profit
+      SELECT
+        SUM(oi.quantity * (oi.item_price - COALESCE(m.cost_price, 0))) as total_profit,
+        COUNT(DISTINCT o.id) as order_count
       FROM orders o
       JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN menu_items m ON oi.item_name = m.name
-      WHERE o.status != 'cancelled'
-    ` + (dateCondition ? ` AND DATE(o.created_at) BETWEEN ? AND ?` : ""),
-      dateCondition ? [fromDate, toDate] : [],
+      WHERE o.status != 'cancelled' ${profitDateCondition}
+    `,
+      params,
     );
 
     const stats = statsRows[0];
-    const profit = parseFloat(profitRows[0].total_profit || 0).toFixed(2);
+    const totalProfit = parseFloat(profitRows[0].total_profit || 0);
+    const orderCount = parseInt(profitRows[0].order_count || 0);
+    const totalRevenue = parseFloat(stats.total_revenue || 0);
+
+    const avgProfit = orderCount > 0 ? (totalProfit / orderCount).toFixed(2) : "0.00";
+    const profitMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : "0.0";
 
     res.json({
       activeOrders: stats.active_orders || 0,
-      totalRevenue: parseFloat(stats.total_revenue || 0).toFixed(2),
+      totalRevenue: totalRevenue.toFixed(2),
       cancelledOrders: stats.cancelled_orders || 0,
-      totalProfit: profit,
+      totalProfit: totalProfit.toFixed(2),
+      avgProfit,
+      profitMargin: parseFloat(profitMargin),
     });
   } catch (err) {
     console.error("Failed to fetch stats", err);

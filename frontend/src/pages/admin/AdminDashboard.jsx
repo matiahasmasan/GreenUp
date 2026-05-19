@@ -12,6 +12,8 @@ export default function AdminDashboard() {
     totalRevenue: "0.00",
     cancelledOrders: 0,
     totalProfit: "0.00",
+    avgProfit: "0.00",
+    profitMargin: 0,
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -122,7 +124,6 @@ export default function AdminDashboard() {
           icon="fas fa-shopping-basket"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "0%" }}
         />
         {/* Total revenue except cancelled */}
         <MetricCard
@@ -132,7 +133,6 @@ export default function AdminDashboard() {
           icon="fas fa-wallet"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "0%" }}
         />
         {/* All-time cancelled orders */}
         <MetricCard
@@ -142,17 +142,16 @@ export default function AdminDashboard() {
           icon="fas fa-times-circle"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: false, value: "0%" }}
         />
         {/* Total profit */}
         <MetricCard
           title="Total Profit"
           value={`${stats.totalProfit} RON`}
-          subtitle="Total profit"
+          subtitle={`Avg. ${stats.avgProfit} RON / order`}
           icon="fas fa-piggy-bank"
           color="text-green-600"
           bgColor="bg-green-50"
-          trend={{ positive: true, value: "0%" }}
+          trend={{ positive: stats.profitMargin >= 0, value: `${stats.profitMargin}%` }}
         />
       </div>
 
