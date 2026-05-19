@@ -1,5 +1,4 @@
 import Modal from "./common/Modal";
-import { CATEGORY_OPTIONS } from "./CategoryTabs";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -13,10 +12,11 @@ export default function ViewProductModal({
   loading,
   error,
   isAdmin = false,
+  categories = [],
 }) {
   const getCategoryLabel = (categoryId) => {
     if (!categoryId) return "Uncategorized";
-    const category = CATEGORY_OPTIONS.find((opt) => opt.id === categoryId);
+    const category = categories.find((opt) => opt.id === categoryId);
     return category ? category.label : "Unknown";
   };
 

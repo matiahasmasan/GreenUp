@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Modal from "./common/Modal";
-import { CATEGORY_OPTIONS } from "./CategoryTabs";
 
 export default function CreateProductModal({
   isOpen,
@@ -8,6 +7,7 @@ export default function CreateProductModal({
   onSave,
   loading,
   error,
+  categories = [],
 }) {
   const [formData, setFormData] = useState({
     name: "",
@@ -180,7 +180,7 @@ export default function CreateProductModal({
             disabled={loading}
           >
             <option value="">Select a category</option>
-            {CATEGORY_OPTIONS.map((category) => (
+            {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.label}
               </option>

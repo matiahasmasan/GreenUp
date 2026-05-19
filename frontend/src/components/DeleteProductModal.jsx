@@ -7,7 +7,13 @@ export default function DeleteProductModal({
   deleteLoading,
   deleteError,
   onConfirmDelete,
+  categories = [],
 }) {
+  const getCategoryLabel = (categoryId) => {
+    if (!categoryId) return "-";
+    const category = categories.find((c) => c.id === categoryId);
+    return category ? category.label : "-";
+  };
   return (
     <Modal
       isOpen={isOpen}
@@ -43,7 +49,7 @@ export default function DeleteProductModal({
           <span className="font-semibold"> {product?.name}</span>?
         </p>
         <p className="text-sm text-gray-600">
-          Category: {product?.category_id || "-"} | Stocks: {product?.stocks ?? 0}
+          Category: {getCategoryLabel(product?.category_id)} | Stocks: {product?.stocks ?? 0}
         </p>
       </div>
     </Modal>
