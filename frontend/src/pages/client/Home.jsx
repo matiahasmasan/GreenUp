@@ -3,6 +3,7 @@ import Hero from "../../components/Hero";
 import MenuSection from "../../components/MenuSection";
 import SearchBar from "../../components/SearchBar";
 import CategoryTabs from "../../components/CategoryTabs";
+import ChatBot from "../../components/ChatBot";
 
 const API_BASE_URL = "/api";
 
@@ -131,6 +132,7 @@ export default function ClientHome({ onNavigate, onAddToCart }) {
         mostSoldItems={mostSoldItems}
         categories={categories}
       />
+      <ChatBot />
     </>
   );
 }
