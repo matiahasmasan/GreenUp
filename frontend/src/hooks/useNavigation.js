@@ -17,6 +17,10 @@ export function useNavigation(setRoute, logout, setCartItems) {
         setRoute("feedback");
       } else if (key === "login") {
         setRoute("login");
+      } else if (key === "register") {
+        setRoute("register");
+      } else if (key === "account") {
+        setRoute("account");
       } else if (key === "admin-dashboard") {
         setRoute("admin-dashboard");
       } else if (key === "operator-dashboard") {
@@ -25,11 +29,9 @@ export function useNavigation(setRoute, logout, setCartItems) {
         setRoute("products");
       } else if (key === "logout") {
         logout();
-        setRoute("login");
-        routeKey = "login";
+        setRoute("home");
+        routeKey = "home";
         setCartItems([]);
-      } else if (key === "flag") {
-        console.log("Not implemented");
       }
 
       try {

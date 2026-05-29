@@ -6,7 +6,7 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
 
   // Define role-specific menu items
   const menuConfig = {
-    // Default for clients (non-authenticated users)
+    // Default for guests (non-authenticated visitors)
     null: [
       { label: "Home", key: "home", icon: "fas fa-home" },
       {
@@ -15,7 +15,18 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         icon: "fas fa-shopping-cart",
         badge: cartItemCount,
       },
-      { label: "Language", key: "flag", icon: "fas fa-flag" },
+      { label: "Login", key: "login", icon: "fas fa-right-to-bracket" },
+    ],
+    // Logged-in customers
+    client: [
+      { label: "Home", key: "home", icon: "fas fa-home" },
+      {
+        label: "Cart",
+        key: "cart",
+        icon: "fas fa-shopping-cart",
+        badge: cartItemCount,
+      },
+      { label: "Account", key: "account", icon: "fas fa-circle-user" },
     ],
     operator: [
       { label: "Orders", key: "operator-dashboard", icon: "fas fa-list" },

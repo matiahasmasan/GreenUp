@@ -5,6 +5,8 @@ import ConfirmedOrder from "../pages/ConfirmedOrder";
 import LeaveFeedback from "../pages/LeaveFeedback";
 import AdminLogin from "../pages/AdminLogin";
 import ClientHome from "../pages/client/Home";
+import Register from "../pages/client/Register";
+import Account from "../pages/client/Account";
 import OperatorDashboard from "../pages/operator/Dashboard";
 import OperatorProducts from "../pages/operator/Products";
 import AdminDashboard from "../pages/admin/AdminDashboard";
@@ -82,6 +84,25 @@ export default function AppRouter({
 
   if (route === "login") {
     return <AdminLogin onNavigate={onNavigate} />;
+  }
+
+  if (route === "register") {
+    return <Register onNavigate={onNavigate} />;
+  }
+
+  if (route === "account") {
+    // Clients only. Guests → login; staff → their own dashboard.
+    if (!user) return <AdminLogin onNavigate={onNavigate} />;
+    if (user.role !== "client") {
+      if (user.role === "operator") {
+        return <OperatorDashboard onNavigate={onNavigate} />;
+      }
+      if (user.role === "admin") {
+        return <AdminDashboard onNavigate={onNavigate} />;
+      }
+      return <NotFound onNavigate={onNavigate} />;
+    }
+    return <Account onNavigate={onNavigate} />;
   }
 
   if (route === "admin-dashboard") {

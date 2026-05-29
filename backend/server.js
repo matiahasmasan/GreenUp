@@ -34,6 +34,23 @@ function requireRole(...roles) {
   };
 }
 
+// Attaches req.user when a valid token is present, but never blocks the
+// request — used for endpoints that work for both guests and logged-in clients.
+function optionalAuth(req, _res, next) {
+  const auth = req.headers["authorization"];
+  const token = auth && auth.split(" ")[1];
+  if (token) {
+    try {
+      req.user = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      // Ignore invalid/expired tokens; treat the caller as a guest.
+    }
+  }
+  next();
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
@@ -60,34 +77,136 @@ async function ensureOrderReviewsTable() {
   `);
 }
 
-// POST /auth/login
+async function columnExists(table, column) {
+  const [rows] = await pool.query(
+    `SELECT 1 FROM information_schema.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1`,
+    [table, column],
+  );
+  return rows.length > 0;
+}
+
+// Adds customer-account support: a 'client' role, profile fields on users,
+// and a nullable orders.user_id link (guests keep user_id NULL).
+async function ensureClientSchema() {
+  await pool.query(
+    `ALTER TABLE users
+       MODIFY COLUMN role ENUM('admin','operator','viewer','client') NOT NULL DEFAULT 'operator'`,
+  );
+
+  if (!(await columnExists("users", "email"))) {
+    await pool.query(
+      "ALTER TABLE users ADD COLUMN email VARCHAR(190) NULL UNIQUE",
+    );
+  }
+  if (!(await columnExists("users", "full_name"))) {
+    await pool.query("ALTER TABLE users ADD COLUMN full_name VARCHAR(255) NULL");
+  }
+
+  if (!(await columnExists("orders", "user_id"))) {
+    await pool.query("ALTER TABLE orders ADD COLUMN user_id INT NULL");
+    await pool.query(
+      `ALTER TABLE orders
+         ADD CONSTRAINT fk_orders_user FOREIGN KEY (user_id)
+         REFERENCES users(id) ON DELETE SET NULL`,
+    );
+  }
+}
+
+// Builds the shared JWT payload + client-facing response body for a user row.
+function buildAuthResponse(user) {
+  const name = user.full_name || user.username;
+  const email = user.email || null;
+  const token = jwt.sign(
+    { id: user.id, username: user.username, role: user.role, name, email },
+    JWT_SECRET,
+    { expiresIn: "8h" },
+  );
+  return { token, role: user.role, username: user.username, name, email };
+}
+
+// POST /auth/login — staff log in with username, clients with email.
 app.post("/auth/login", async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
-    return res.status(400).json({ error: "Username and password required" });
+  const { username, email, password } = req.body;
+  const identifier = (username || email || "").trim();
+  if (!identifier || !password) {
+    return res
+      .status(400)
+      .json({ error: "Username/email and password required" });
   }
   try {
     const [rows] = await pool.query(
-      "SELECT id, username, password_hash, role FROM users WHERE username = ?",
-      [username],
+      "SELECT id, username, password_hash, role, email, full_name FROM users WHERE username = ? OR email = ?",
+      [identifier, identifier],
     );
     if (rows.length === 0) {
-      return res.status(401).json({ error: "Invalid username or password" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
     const user = rows[0];
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      return res.status(401).json({ error: "Invalid username or password" });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
-    const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role },
-      JWT_SECRET,
-      { expiresIn: "8h" },
-    );
-    res.json({ token, role: user.role, username: user.username });
+    res.json(buildAuthResponse(user));
   } catch (err) {
     console.error("Login error", err);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// POST /auth/register — self-service client account creation.
+app.post("/auth/register", async (req, res) => {
+  const { fullName, email, password } = req.body;
+  if (!fullName || !fullName.trim() || !email || !password) {
+    return res
+      .status(400)
+      .json({ error: "Full name, email, and password are required" });
+  }
+
+  const normalizedEmail = String(email).trim().toLowerCase();
+  if (!EMAIL_RE.test(normalizedEmail)) {
+    return res.status(400).json({ error: "Please enter a valid email address" });
+  }
+  if (String(password).length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters" });
+  }
+
+  try {
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE username = ? OR email = ?",
+      [normalizedEmail, normalizedEmail],
+    );
+    if (existing.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "An account with this email already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      "INSERT INTO users (username, password_hash, role, email, full_name) VALUES (?, ?, 'client', ?, ?)",
+      [normalizedEmail, passwordHash, normalizedEmail, fullName.trim()],
+    );
+
+    res.status(201).json(
+      buildAuthResponse({
+        id: result.insertId,
+        username: normalizedEmail,
+        role: "client",
+        email: normalizedEmail,
+        full_name: fullName.trim(),
+      }),
+    );
+  } catch (err) {
+    if (err && err.code === "ER_DUP_ENTRY") {
+      return res
+        .status(409)
+        .json({ error: "An account with this email already exists" });
+    }
+    console.error("Registration error", err);
+    res.status(500).json({ error: "Registration failed" });
   }
 });
 
@@ -234,9 +353,11 @@ app.patch("/menu-items/stock", authenticateToken, async (req, res) => {
   }
 });
 
-// POST /orders - Create a new order
-app.post("/orders", async (req, res) => {
+// POST /orders - Create a new order (guests allowed; links to a client if logged in)
+app.post("/orders", optionalAuth, async (req, res) => {
   const { customerName, table, paymentMethod, items, total, kitchenNote } = req.body;
+  // Only client accounts own orders; staff tokens never claim an order.
+  const userId = req.user && req.user.role === "client" ? req.user.id : null;
 
   // Validate required fields
   if (
@@ -258,8 +379,8 @@ app.post("/orders", async (req, res) => {
 
     // Insert order with default status 'pending'
     const [orderResult] = await conn.query(
-      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status, kitchen_note) VALUES (?, ?, ?, ?, ?, ?)",
-      [customerName, table, paymentMethod, total || 0, "pending", kitchenNote?.trim() || null],
+      "INSERT INTO orders (customer_name, table_number, payment_method, total_amount, status, kitchen_note, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      [customerName, table, paymentMethod, total || 0, "pending", kitchenNote?.trim() || null, userId],
     );
 
     const orderId = orderResult.insertId;
@@ -409,6 +530,81 @@ app.post("/order-reviews", async (req, res) => {
     res.status(500).json({ error: "Failed to save feedback" });
   }
 });
+
+// GET /my/orders - orders belonging to the logged-in client.
+// Matches orders linked by user_id plus older guest orders under the same name.
+app.get(
+  "/my/orders",
+  authenticateToken,
+  requireRole("client"),
+  async (req, res) => {
+    try {
+      const userId = req.user.id;
+      const fullName = req.user.name || null;
+
+      const [orders] = await pool.query(
+        `SELECT id, customer_name, table_number, payment_method, total_amount, status, kitchen_note, created_at, updated_at
+         FROM orders
+         WHERE user_id = ? OR (user_id IS NULL AND customer_name = ?)
+         ORDER BY created_at DESC`,
+        [userId, fullName],
+      );
+
+      if (orders.length === 0) {
+        return res.json([]);
+      }
+
+      const orderIds = orders.map((o) => o.id);
+
+      const [orderItems] = await pool.query(
+        `SELECT id, order_id, item_name, item_price, quantity, subtotal
+         FROM order_items
+         WHERE order_id IN (?)
+         ORDER BY order_id, id`,
+        [orderIds],
+      );
+
+      const orderItemIds = orderItems.map((i) => i.id);
+      let addonsByItemId = {};
+      if (orderItemIds.length > 0) {
+        const [addons] = await pool.query(
+          `SELECT order_item_id, addon_name, addon_price FROM order_item_addons WHERE order_item_id IN (?)`,
+          [orderItemIds],
+        );
+        addonsByItemId = addons.reduce((acc, a) => {
+          if (!acc[a.order_item_id]) acc[a.order_item_id] = [];
+          acc[a.order_item_id].push({
+            name: a.addon_name,
+            price: Number(a.addon_price),
+          });
+          return acc;
+        }, {});
+      }
+
+      const itemsByOrder = orderItems.reduce((acc, item) => {
+        if (!acc[item.order_id]) acc[item.order_id] = [];
+        acc[item.order_id].push({
+          name: item.item_name,
+          price: item.item_price,
+          quantity: item.quantity,
+          subtotal: item.subtotal,
+          addons: addonsByItemId[item.id] || [],
+        });
+        return acc;
+      }, {});
+
+      res.json(
+        orders.map((order) => ({
+          ...order,
+          items: itemsByOrder[order.id] || [],
+        })),
+      );
+    } catch (err) {
+      console.error("Failed to fetch client orders", err);
+      res.status(500).json({ error: "Failed to fetch your orders" });
+    }
+  },
+);
 
 // GET /orders/:id - Retrieve a single order by ID with its items
 app.get("/orders/:id", authenticateToken, async (req, res) => {
@@ -1322,8 +1518,9 @@ const PORT = process.env.PORT || 4000;
 async function start() {
   try {
     await ensureOrderReviewsTable();
+    await ensureClientSchema();
   } catch (err) {
-    console.error("Could not ensure order_reviews table:", err.message);
+    console.error("Could not prepare database schema:", err.message);
     process.exit(1);
   }
 

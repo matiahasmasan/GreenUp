@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Hero from "../components/Hero";
+import { authFetch, getCurrentUser } from "../utils/authUtils";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -21,7 +22,12 @@ export default function Checkout({
       : null;
   const initialTable = params ? params.get("table") || "" : "";
 
-  const [name, setName] = useState("");
+  // Prefill the name for logged-in clients so their orders link to their account.
+  const currentUser = getCurrentUser();
+  const initialName =
+    currentUser?.role === "client" ? currentUser.name || "" : "";
+
+  const [name, setName] = useState(initialName);
   const [table, setTable] = useState(initialTable);
   const [paymentMethod, setPaymentMethod] = useState("card");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -64,8 +70,9 @@ export default function Checkout({
     try {
       const API_BASE_URL = "/api";
 
-      // Send order to backend
-      const response = await fetch(`${API_BASE_URL}/orders`, {
+      // Send order to backend. authFetch attaches the client's token when
+      // logged in (so the order links to their account); guests send no token.
+      const response = await authFetch(`${API_BASE_URL}/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
