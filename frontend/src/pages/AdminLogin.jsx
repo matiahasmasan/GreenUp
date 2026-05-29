@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { setAuthToken } from "../utils/authUtils";
+import { setAuthToken, getCurrentUser } from "../utils/authUtils";
 
 export default function AdminLogin({ onNavigate }) {
   const { login } = useAuth();
-  const [username, setUsername] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,7 +20,7 @@ export default function AdminLogin({ onNavigate }) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: identifier, password }),
       });
 
       const data = await res.json();
@@ -30,7 +30,7 @@ export default function AdminLogin({ onNavigate }) {
       }
 
       setAuthToken(data.token);
-      login({ username: data.username, role: data.role }, data.token);
+      login(getCurrentUser(), data.token);
 
       setSuccess("Login successful — redirecting...");
 
@@ -39,10 +39,12 @@ export default function AdminLogin({ onNavigate }) {
           onNavigate?.("admin-dashboard");
         } else if (data.role === "operator") {
           onNavigate?.("operator-dashboard");
+        } else if (data.role === "client") {
+          onNavigate?.("account");
         } else {
           onNavigate?.("home");
         }
-      }, 1000);
+      }, 800);
     } catch (err) {
       setError(err.message || "Login failed");
     } finally {
@@ -56,16 +58,19 @@ export default function AdminLogin({ onNavigate }) {
         className="checkout-section"
         style={{ maxWidth: 560, margin: "0 auto" }}
       >
-        <h2 className="checkout-section-title">Admin / Operator Login</h2>
+        <h2 className="checkout-section-title">
+          <i className="fas fa-right-to-bracket"></i> Log in
+        </h2>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="identifier">Email or username</label>
             <input
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="username"
+              id="identifier"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="username"
             />
           </div>
 
@@ -77,6 +82,7 @@ export default function AdminLogin({ onNavigate }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="password"
+              autoComplete="current-password"
             />
           </div>
 
@@ -108,6 +114,17 @@ export default function AdminLogin({ onNavigate }) {
             </button>
           </div>
         </form>
+
+        <p style={{ marginTop: "1.25rem", textAlign: "center" }}>
+          New here?{" "}
+          <button
+            type="button"
+            className="link-button"
+            onClick={() => onNavigate?.("register")}
+          >
+            Create an account
+          </button>
+        </p>
       </div>
     </div>
   );
