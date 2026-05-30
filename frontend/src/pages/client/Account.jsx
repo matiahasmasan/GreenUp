@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { authFetch, getCurrentUser } from "../../utils/authUtils";
 import { formatDate } from "../../utils/dateFormatter";
+import Pagination from "../../components/common/Pagination";
+
+const ORDERS_PER_PAGE = 3;
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -41,6 +44,8 @@ export default function Account({ onNavigate }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     let active = true;
@@ -66,6 +71,14 @@ export default function Account({ onNavigate }) {
     (sum, o) => sum + Number(o.total_amount || 0),
     0,
   );
+
+  const totalPages = Math.ceil(orders.length / ORDERS_PER_PAGE) || 1;
+  const pageStart = (currentPage - 1) * ORDERS_PER_PAGE;
+  const paginatedOrders = orders.slice(pageStart, pageStart + ORDERS_PER_PAGE);
+
+  const toggleOrder = (id) => {
+    setExpandedId((prev) => (prev === id ? null : id));
+  };
 
   const handleLogout = () => {
     logout();
@@ -159,81 +172,131 @@ export default function Account({ onNavigate }) {
 
         {!loading &&
           !error &&
-          orders.map((order) => (
-            <div
-              key={order.id}
-              style={{
-                border: "1px solid var(--gray-200)",
-                borderRadius: "0.75rem",
-                padding: "1rem",
-                marginBottom: "1rem",
-              }}
-            >
+          paginatedOrders.map((order) => {
+            const isExpanded = expandedId === order.id;
+            return (
               <div
+                key={order.id}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "0.5rem",
+                  border: "1px solid var(--gray-200)",
+                  borderRadius: "0.75rem",
+                  padding: "1rem",
+                  marginBottom: "1rem",
                 }}
               >
-                <div>
-                  <strong>Order #{order.id}</strong>
-                  <div style={{ fontSize: "0.8rem", color: "var(--green-700)" }}>
-                    {formatDate(order.created_at)}
-                  </div>
-                </div>
-                <StatusBadge status={order.status} />
-              </div>
-
-              <div className="order-items">
-                {(order.items || []).map((item, idx) => (
-                  <div key={idx} className="order-item">
-                    <div className="order-item-info">
-                      <div>
-                        <span className="order-item-name">{item.name}</span>
-                        {item.addons?.length > 0 && (
-                          <ul className="order-item-addons">
-                            {item.addons.map((a, i) => (
-                              <li key={i}>
-                                + {a.name}
-                                {a.price > 0
-                                  ? ` (+$${Number(a.price).toFixed(2)})`
-                                  : ""}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                      <span className="order-item-qty">x{item.quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => toggleOrder(order.id)}
+                  aria-expanded={isExpanded}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    width: "100%",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    textAlign: "left",
+                  }}
+                >
+                  <div>
+                    <strong>Order #{order.id}</strong>
+                    <div
+                      style={{ fontSize: "0.8rem", color: "var(--green-700)" }}
+                    >
+                      {formatDate(order.created_at)}
                     </div>
-                    <span className="order-item-price">
-                      {priceFormatter.format(Number(item.subtotal || 0))}
-                    </span>
                   </div>
-                ))}
-              </div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "0.75rem",
+                    }}
+                  >
+                    <StatusBadge status={order.status} />
+                    <i
+                      className="fas fa-chevron-down"
+                      style={{
+                        color: "var(--green-700)",
+                        transition: "transform 0.2s ease",
+                        transform: isExpanded ? "rotate(180deg)" : "rotate(0)",
+                      }}
+                    ></i>
+                  </div>
+                </button>
 
-              <div className="order-summary">
-                <div className="summary-row">
-                  <span>Table</span>
-                  <strong>{order.table_number}</strong>
-                </div>
-                <div className="summary-row">
-                  <span>Payment</span>
-                  <strong>
-                    {order.payment_method === "card" ? "Card" : "Cash"}
-                  </strong>
-                </div>
-                <div className="summary-row total">
-                  <span>Total</span>
-                  <strong>
-                    {priceFormatter.format(Number(order.total_amount || 0))}
-                  </strong>
-                </div>
+                {isExpanded && (
+                  <div style={{ marginTop: "0.75rem" }}>
+                    <div className="order-items">
+                      {(order.items || []).map((item, idx) => (
+                        <div key={idx} className="order-item">
+                          <div className="order-item-info">
+                            <div>
+                              <span className="order-item-name">
+                                {item.name}
+                              </span>
+                              {item.addons?.length > 0 && (
+                                <ul className="order-item-addons">
+                                  {item.addons.map((a, i) => (
+                                    <li key={i}>
+                                      + {a.name}
+                                      {a.price > 0
+                                        ? ` (+$${Number(a.price).toFixed(2)})`
+                                        : ""}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                            <span className="order-item-qty">
+                              x{item.quantity}
+                            </span>
+                          </div>
+                          <span className="order-item-price">
+                            {priceFormatter.format(Number(item.subtotal || 0))}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="order-summary">
+                      <div className="summary-row">
+                        <span>Table</span>
+                        <strong>{order.table_number}</strong>
+                      </div>
+                      <div className="summary-row">
+                        <span>Payment</span>
+                        <strong>
+                          {order.payment_method === "card" ? "Card" : "Cash"}
+                        </strong>
+                      </div>
+                      <div className="summary-row total">
+                        <span>Total</span>
+                        <strong>
+                          {priceFormatter.format(
+                            Number(order.total_amount || 0),
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
+
+        {!loading && !error && orders.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            totalItems={orders.length}
+            itemsPerPage={ORDERS_PER_PAGE}
+            itemName="orders"
+          />
+        )}
       </section>
     </div>
   );
