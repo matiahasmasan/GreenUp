@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-GreenUp is a QR-code-based restaurant ordering system. Clients scan a table's QR code to browse the menu, add items to cart, and place orders. Operators view and manage incoming orders. Admins see analytics and manage the full menu.
+GreenUp is a QR-code-based restaurant ordering system. Clients scan a table's QR code to browse the menu, add items to cart, and place orders — either as guests or with a registered account. Operators view and manage incoming orders. Admins see analytics and manage the full menu.
+
+**Roles:** `client` (registered customers), `operator` (kitchen/order staff), `admin` (full access + analytics), plus a legacy `viewer` role in the enum. Guests (no account) can still order; the order is linked to a `user_id` only when a logged-in client checks out.
 
 **Stack:** React 19 + Vite (frontend) · Node.js + Express 5 (backend) · MySQL 8 (database) · JWT auth · TailwindCSS 4
 
@@ -39,9 +41,10 @@ No build step for the backend; it runs directly with Node.
 
 ### Frontend Routing
 
-Hash-based SPA (no React Router). Hash values like `#home`, `#cart`, `#operator-dashboard` drive routing in `frontend/src/App.jsx` → `AppRouter.jsx`. The `guard()` function in AppRouter redirects users to their role's dashboard if they hit a forbidden route.
+Hash-based SPA (no React Router). Hash values like `#home`, `#cart`, `#operator-dashboard` drive routing in `frontend/src/App.jsx` → `AppRouter.jsx`. The `guard()` function in AppRouter redirects users to their role's dashboard (or login/404) if they hit a forbidden route.
 
-**Public routes:** `home`, `cart`, `checkout`, `confirmed`, `feedback`, `login`  
+**Public routes:** `home`, `cart`, `checkout`, `confirmed`, `feedback`, `login`, `register`  
+**Client-only:** `account` (order history / profile)  
 **Operator/Admin:** `operator-dashboard`, `products`  
 **Admin-only:** `admin-dashboard`
 
@@ -56,28 +59,39 @@ Hash-based SPA (no React Router). Hash values like `#home`, `#cart`, `#operator-
 
 All requests go through Vite's dev proxy (`/api` → `localhost:4000`). Protected requests use `authFetch()` from `frontend/src/utils/authUtils.js`, which auto-attaches the Bearer token.
 
-Backend is a single file: `backend/server.js` (+1300 lines) with Express 5. Middleware chain:
+Backend is a single file: `backend/server.js` (~1500 lines) with Express 5. Per-route middleware:
 
-1. JSON parser + CORS
-2. `authenticateToken` (JWT verify, attaches `req.user`)
-3. `requireRole(...roles)` (role-based guard)
+1. JSON parser + CORS (global)
+2. `authenticateToken` — JWT verify, attaches `req.user`, **401 if missing/invalid**
+3. `optionalAuth` — attaches `req.user` if a valid token is present but never blocks; used for endpoints that serve both guests and logged-in clients (e.g. `POST /orders`)
+4. `requireRole(...roles)` — role-based guard (403 on mismatch)
+
+### Auth
+
+- One login endpoint `POST /auth/login`: staff authenticate with `username`, clients with `email` (both checked against the same column query). `POST /auth/register` creates `client` accounts only.
+- `buildAuthResponse()` is the single source for the JWT payload (`{ id, username, role, name, email }`, 8h expiry) and the response body — reuse it when adding auth flows.
+- Frontend stores the token in `localStorage` as `adminToken` (legacy name, used for all roles) via `AuthContext` + `authUtils.js`.
 
 ### Database & Key Business Logic
 
-**Tables:** `users`, `categories`, `menu_items`, `product_addons`, `orders`, `order_items`, `order_item_addons`, `order_reviews`
+**Tables:** `users` (with `email`, `full_name` profile columns), `categories`, `menu_items`, `product_addons`, `orders` (with nullable `user_id`), `order_items`, `order_item_addons`, `order_reviews`
 
-**Order creation** (`POST /orders`) runs in a MySQL transaction:
+**Schema auto-migration on startup:** the server idempotently patches the schema at boot (see `ensureOrderReviewsTable()` and `ensureClientSchema()`) — it widens the `users.role` enum, adds `users.email`/`users.full_name`, adds `orders.user_id` (FK, `ON DELETE SET NULL`), and creates `order_reviews`. There's no migration runner; `backend/migrations/order_reviews.sql` is reference SQL only. Add schema changes as new idempotent `ensure*()` functions guarded by `columnExists()`.
 
-1. Insert order row
+**Order creation** (`POST /orders`, `optionalAuth`) runs in a MySQL transaction:
+
+1. Insert order row — `user_id` set only when a logged-in `client` places it; guests stay `NULL`
 2. Insert each order_item + its addons
 3. Decrement stock on each `menu_item`; auto-disable if stock ≤ 0
 4. Rollback entire transaction if any step fails (stock insufficient, item not found)
+
+**Client order history** (`GET /my/orders`, `requireRole("client")`) matches both `user_id = <id>` and legacy guest orders by `user_id IS NULL AND customer_name = <full_name>`.
 
 **Order deletion** restores stock for each item in the order.
 
 **Stock enforcement** uses `SELECT ... FOR UPDATE` row-level locking to prevent race conditions.
 
-`order_reviews` has a `UNIQUE(order_id)` constraint — one review per order. The table is auto-created on server startup if it doesn't exist.
+`order_reviews` has a `UNIQUE(order_id)` constraint — one review per order.
 
 ### Component Conventions
 
@@ -85,6 +99,7 @@ Backend is a single file: `backend/server.js` (+1300 lines) with Express 5. Midd
 - Modals are dedicated components named `[Feature]Modal.jsx` (e.g., `EditOrderModal.jsx`, `CreateProductModal.jsx`)
 - Shared UI lives in `frontend/src/components/common/` (`Modal.jsx`, `Pagination.jsx`)
 - `authFetch` replaces all `fetch` calls for protected endpoints
+- `ChatBot.jsx` ("Sprout") is a UI-only demo — it returns canned replies with no backend; there is no chat API yet
 
 ### Auth Utilities (`frontend/src/utils/authUtils.js`)
 
