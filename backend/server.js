@@ -4,8 +4,16 @@ const mysql = require("mysql2/promise");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
+const Anthropic = require("@anthropic-ai/sdk");
 
 dotenv.config();
+
+// Claude client for the "Sprout" menu-assistant chatbot. Reads ANTHROPIC_API_KEY
+// from the environment; chat endpoint returns 503 if the key is missing.
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+const CHAT_MODEL = "claude-haiku-4-5";
 
 const JWT_SECRET = process.env.JWT_SECRET || "change_this_secret";
 
@@ -1512,6 +1520,105 @@ app.get(
     }
   },
 );
+
+// ---------------------------------------------------------------------------
+// Chatbot ("Sprout") — grounded menu assistant powered by Claude Haiku.
+// ---------------------------------------------------------------------------
+
+// Builds the system prompt with the current in-stock menu so Claude only ever
+// recommends dishes that actually exist and are available.
+async function buildSproutSystemPrompt() {
+  const [items] = await pool.query(
+    `SELECT m.name, m.description, m.price, c.label AS category
+       FROM menu_items m
+       LEFT JOIN categories c ON c.id = m.category_id
+      WHERE m.is_available = 1 AND m.stocks > 0
+      ORDER BY c.id ASC, m.name ASC`,
+  );
+
+  const menuText = items.length
+    ? items
+        .map(
+          (it) =>
+            `- ${it.name} (${it.category || "Other"}) — $${Number(it.price).toFixed(2)}${
+              it.description ? `: ${it.description}` : ""
+            }`,
+        )
+        .join("\n")
+    : "(No items are currently available.)";
+
+  return `You are Sprout 🌱, the friendly menu assistant for GreenUp, a restaurant ordering app.
+
+Your job is to help guests pick dishes from the menu. Be warm, concise, and conversational — keep replies to a few sentences. Use the occasional tasteful emoji.
+
+Rules:
+- Only recommend dishes from the menu below. Never invent dishes, prices, or ingredients.
+- If a guest asks for something not on the menu, say so and suggest the closest available option.
+- When you recommend a dish, mention its price.
+- If asked about something unrelated to the menu or ordering, gently steer back to helping them choose a meal.
+- You cannot place orders, check order status, or access accounts — tell guests to use the menu and cart for that.
+
+Current menu (only these items are available):
+${menuText}`;
+}
+
+// POST /chat - public; powers the Sprout chatbot widget.
+// Body: { messages: [{ role: "user" | "assistant", content: string }, ...] }
+app.post("/chat", async (req, res) => {
+  if (!anthropic) {
+    return res
+      .status(503)
+      .json({ error: "Chat is not configured. Missing ANTHROPIC_API_KEY." });
+  }
+
+  const { messages } = req.body || {};
+  if (!Array.isArray(messages) || messages.length === 0) {
+    return res.status(400).json({ error: "messages must be a non-empty array" });
+  }
+
+  // Sanitize: keep only valid user/assistant turns with non-empty text, cap the
+  // history length and per-message size to bound token usage.
+  const history = messages
+    .filter(
+      (m) =>
+        m &&
+        (m.role === "user" || m.role === "assistant") &&
+        typeof m.content === "string" &&
+        m.content.trim().length > 0,
+    )
+    .slice(-20)
+    .map((m) => ({ role: m.role, content: m.content.trim().slice(0, 2000) }));
+
+  if (history.length === 0 || history[history.length - 1].role !== "user") {
+    return res.status(400).json({ error: "Last message must be from the user" });
+  }
+
+  try {
+    const system = await buildSproutSystemPrompt();
+
+    const response = await anthropic.messages.create({
+      model: CHAT_MODEL,
+      max_tokens: 1024,
+      system,
+      messages: history,
+    });
+
+    const reply = response.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+
+    res.json({ reply: reply || "Sorry, I didn't catch that — could you rephrase? 🌱" });
+  } catch (err) {
+    if (err instanceof Anthropic.APIError) {
+      console.error(`Claude API error ${err.status}:`, err.message);
+    } else {
+      console.error("Chat failed", err);
+    }
+    res.status(502).json({ error: "Sprout is unavailable right now. Please try again." });
+  }
+});
 
 const PORT = process.env.PORT || 4000;
 

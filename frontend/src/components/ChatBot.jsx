@@ -33,25 +33,51 @@ export default function ChatBot() {
     }
   }, [isOpen]);
 
-  const send = (text) => {
+  const send = async (text) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed || isTyping) return;
 
-    setMessages((prev) => [...prev, { from: "user", text: trimmed }]);
+    const userMessage = { from: "user", text: trimmed };
+    // Build the history we'll send, including the new turn, so we don't depend
+    // on the async state update landing first.
+    const nextMessages = [...messages, userMessage];
+
+    setMessages(nextMessages);
     setInput("");
     setIsTyping(true);
 
-    // No workflow yet — placeholder reply so the UX feels alive.
-    setTimeout(() => {
-      setIsTyping(false);
+    // Map to the API shape and drop the leading bot greeting — the Claude API
+    // requires the first message in the array to be from the user.
+    const apiMessages = nextMessages.map((m) => ({
+      role: m.from === "user" ? "user" : "assistant",
+      content: m.text,
+    }));
+    while (apiMessages.length && apiMessages[0].role !== "user") {
+      apiMessages.shift();
+    }
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: apiMessages }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Request failed");
+
+      setMessages((prev) => [...prev, { from: "bot", text: data.reply }]);
+    } catch (err) {
+      console.error("Chat request failed", err);
       setMessages((prev) => [
         ...prev,
         {
           from: "bot",
-          text: "Thanks! I'm still learning the menu 🍃 — soon I'll be able to recommend the perfect dish for you.",
+          text: "Sorry, I'm having trouble connecting right now 🍃 — please try again in a moment.",
         },
       ]);
-    }, 1100);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleSubmit = (e) => {

@@ -11,7 +11,16 @@
       "PowerShell(Get-NetTCPConnection *)",
       "PowerShell(Get-Process *)",
       "Bash(node cleanup_tmp.js)",
-      "PowerShell(Stop-Process *)"
+      "PowerShell(Stop-Process *)",
+      "Read(//c/Users/matia/.claude/**)",
+      "Read(//c/Users/matia/.claude/plugins/**)",
+      "Read(//c/Users/matia/**)",
+      "Skill(claude-api)",
+      "Read(//c/c/Users/matia/Documents/GreenUp/backend/**)",
+      "Bash(cat vite.config.js)",
+      "Bash(cat vite.config.ts)",
+      "Bash(npm install *)",
+      "Bash(node *)"
     ]
   }
 }
