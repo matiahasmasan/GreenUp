@@ -12,6 +12,14 @@ const GREETING = {
   text: "Hi! I'm Sprout 🌱, your menu assistant. Tell me what you're in the mood for and I'll help you pick the perfect dish.",
 };
 
+// Render **bold** spans (and nothing else) without dangerouslySetInnerHTML.
+// Splits on the **...** delimiter and wraps the captured groups in <strong>.
+function renderText(text) {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) =>
+    i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
+  );
+}
+
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([GREETING]);
@@ -156,7 +164,7 @@ export default function ChatBot() {
                     : "rounded-bl-md bg-white text-gray-700 ring-1 ring-gray-100"
                 }`}
               >
-                {m.text}
+                {m.from === "bot" ? renderText(m.text) : m.text}
               </div>
             </div>
           ))}
