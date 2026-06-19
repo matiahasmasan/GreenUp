@@ -46,6 +46,7 @@ function FooterBar({ onNavigate = () => {}, cartItemCount = 0 }) {
         icon: "fas fa-list",
       },
       { label: "Products", key: "products", icon: "fas fa-burger" },
+      { label: "Users", key: "users", icon: "fas fa-users" },
       { label: "Logout", key: "logout", icon: "fas fa-sign-out-alt" },
     ],
   };

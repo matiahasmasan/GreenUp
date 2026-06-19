@@ -10,6 +10,7 @@ import Account from "../pages/client/Account";
 import OperatorDashboard from "../pages/operator/Dashboard";
 import OperatorProducts from "../pages/operator/Products";
 import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminUsers from "../pages/admin/Users";
 import NotFound from "../pages/NotFound";
 import { useAuth } from "../context/AuthContext";
 
@@ -115,6 +116,10 @@ export default function AppRouter({
 
   if (route === "products") {
     return guard(<OperatorProducts onNavigate={onNavigate} />, ["operator", "admin"]);
+  }
+
+  if (route === "users") {
+    return guard(<AdminUsers onNavigate={onNavigate} />, ["admin"]);
   }
 
   // 404 Not Found

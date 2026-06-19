@@ -1226,6 +1226,19 @@ app.delete(
 
 // admin cards
 // GET /stats - Retrieve dashboard metrics
+// GET /users - list all users (admin only)
+app.get("/users", authenticateToken, requireRole("admin"), async (_req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, username, role, email, full_name, created_at FROM users ORDER BY created_at DESC",
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error("Failed to fetch users", err);
+    res.status(500).json({ error: "Failed to fetch users" });
+  }
+});
+
 app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 
