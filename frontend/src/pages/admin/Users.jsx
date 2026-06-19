@@ -4,6 +4,7 @@ import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/SearchBar";
 import CreateUserModal from "../../components/CreateUserModal";
+import ViewUserModal from "../../components/ViewUserModal";
 
 const API_BASE_URL = "/api";
 
@@ -25,6 +26,9 @@ export default function AdminUsers() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
   const [createError, setCreateError] = useState("");
+  // View modal state
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     fetchUsers();
@@ -75,10 +79,17 @@ export default function AdminUsers() {
     }
   };
 
-  // Placeholder action handlers (not wired up yet)
   const handleView = (user) => {
-    console.log("View user", user);
+    setSelectedUser(user);
+    setViewModalOpen(true);
   };
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedUser(null);
+  };
+
+  // Placeholder action handlers (not wired up yet)
 
   const handleEdit = (user) => {
     console.log("Edit user", user);
@@ -241,6 +252,14 @@ export default function AdminUsers() {
         onSave={handleCreateUser}
         loading={createLoading}
         error={createError}
+      />
+
+      <ViewUserModal
+        isOpen={viewModalOpen}
+        onClose={handleCloseViewModal}
+        selectedUser={selectedUser}
+        loading={false}
+        error=""
       />
     </div>
   );
