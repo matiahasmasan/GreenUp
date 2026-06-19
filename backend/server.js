@@ -1420,6 +1420,30 @@ app.put("/users/:id", authenticateToken, requireRole("admin"), async (req, res) 
   }
 });
 
+// DELETE /users/:id - delete a user (admin only)
+app.delete("/users/:id", authenticateToken, requireRole("admin"), async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: "Invalid user id" });
+  }
+
+  // Guard against an admin deleting their own account.
+  if (userId === req.user.id) {
+    return res.status(400).json({ error: "You cannot delete your own account" });
+  }
+
+  try {
+    const [result] = await pool.query("DELETE FROM users WHERE id = ?", [userId]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to delete user", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
 app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 

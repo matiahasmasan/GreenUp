@@ -6,6 +6,7 @@ import SearchBar from "../../components/SearchBar";
 import CreateUserModal from "../../components/CreateUserModal";
 import ViewUserModal from "../../components/ViewUserModal";
 import EditUserModal from "../../components/EditUserModal";
+import DeleteUserModal from "../../components/DeleteUserModal";
 
 const API_BASE_URL = "/api";
 
@@ -34,6 +35,11 @@ export default function AdminUsers() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState("");
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargetUser, setDeleteTargetUser] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -94,8 +100,6 @@ export default function AdminUsers() {
     setSelectedUser(null);
   };
 
-  // Placeholder action handlers (not wired up yet)
-
   const handleEdit = (user) => {
     setSelectedUser(user);
     setEditError("");
@@ -135,7 +139,41 @@ export default function AdminUsers() {
   };
 
   const handleDelete = (user) => {
-    console.log("Delete user", user);
+    setDeleteTargetUser(user);
+    setDeleteError("");
+    setDeleteModalOpen(true);
+  };
+
+  const handleCloseDeleteModal = () => {
+    if (deleteLoading) return;
+    setDeleteModalOpen(false);
+    setDeleteTargetUser(null);
+    setDeleteError("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetUser?.id) return;
+    try {
+      setDeleteLoading(true);
+      setDeleteError("");
+
+      const res = await authFetch(`${API_BASE_URL}/users/${deleteTargetUser.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete user");
+      }
+
+      await fetchUsers();
+      setDeleteModalOpen(false);
+      setDeleteTargetUser(null);
+    } catch (err) {
+      setDeleteError(err.message || "Failed to delete user");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const getUserName = (user) =>
@@ -308,6 +346,15 @@ export default function AdminUsers() {
         loading={editLoading}
         error={editError}
         onSave={handleUpdateUser}
+      />
+
+      <DeleteUserModal
+        isOpen={deleteModalOpen}
+        onClose={handleCloseDeleteModal}
+        user={deleteTargetUser}
+        deleteLoading={deleteLoading}
+        deleteError={deleteError}
+        onConfirmDelete={handleConfirmDelete}
       />
     </div>
   );
