@@ -5,6 +5,7 @@ import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/SearchBar";
 import CreateUserModal from "../../components/CreateUserModal";
 import ViewUserModal from "../../components/ViewUserModal";
+import EditUserModal from "../../components/EditUserModal";
 
 const API_BASE_URL = "/api";
 
@@ -29,6 +30,10 @@ export default function AdminUsers() {
   // View modal state
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -92,7 +97,41 @@ export default function AdminUsers() {
   // Placeholder action handlers (not wired up yet)
 
   const handleEdit = (user) => {
-    console.log("Edit user", user);
+    setSelectedUser(user);
+    setEditError("");
+    setEditModalOpen(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditModalOpen(false);
+    setSelectedUser(null);
+    setEditError("");
+  };
+
+  const handleUpdateUser = async (payload) => {
+    if (!selectedUser) return;
+    try {
+      setEditLoading(true);
+      setEditError("");
+
+      const res = await authFetch(`${API_BASE_URL}/users/${selectedUser.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update user");
+      }
+
+      await fetchUsers();
+      handleCloseEditModal();
+    } catch (err) {
+      setEditError(err.message || "Failed to update user");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const handleDelete = (user) => {
@@ -260,6 +299,15 @@ export default function AdminUsers() {
         selectedUser={selectedUser}
         loading={false}
         error=""
+      />
+
+      <EditUserModal
+        isOpen={editModalOpen}
+        onClose={handleCloseEditModal}
+        selectedUser={selectedUser}
+        loading={editLoading}
+        error={editError}
+        onSave={handleUpdateUser}
       />
     </div>
   );

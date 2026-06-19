@@ -1321,6 +1321,105 @@ app.post("/users", authenticateToken, requireRole("admin"), async (req, res) => 
   }
 });
 
+// PUT /users/:id - update a user (admin only)
+app.put("/users/:id", authenticateToken, requireRole("admin"), async (req, res) => {
+  const userId = parseInt(req.params.id, 10);
+  if (Number.isNaN(userId)) {
+    return res.status(400).json({ error: "Invalid user id" });
+  }
+
+  const { role, password } = req.body;
+  const allowedRoles = ["admin", "operator", "client"];
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ error: "Please select a valid role" });
+  }
+
+  // Guard against an admin locking themselves out by changing their own role.
+  if (userId === req.user.id && role !== req.user.role) {
+    return res.status(400).json({ error: "You cannot change your own role" });
+  }
+
+  if (password !== undefined && password !== "" && String(password).length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters" });
+  }
+
+  let username;
+  let email = null;
+  const fullName = req.body.fullName?.trim() || null;
+
+  if (role === "client") {
+    const normalizedEmail = String(req.body.email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(normalizedEmail)) {
+      return res
+        .status(400)
+        .json({ error: "Please enter a valid email address" });
+    }
+    if (!fullName) {
+      return res.status(400).json({ error: "Full name is required for clients" });
+    }
+    username = normalizedEmail;
+    email = normalizedEmail;
+  } else {
+    username = String(req.body.username || "").trim();
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    const maybeEmail = String(req.body.email || "").trim().toLowerCase();
+    if (maybeEmail) {
+      if (!EMAIL_RE.test(maybeEmail)) {
+        return res
+          .status(400)
+          .json({ error: "Please enter a valid email address" });
+      }
+      email = maybeEmail;
+    }
+  }
+
+  try {
+    const [existingUser] = await pool.query(
+      "SELECT id FROM users WHERE id = ?",
+      [userId],
+    );
+    if (existingUser.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const [conflict] = await pool.query(
+      "SELECT id FROM users WHERE id != ? AND (username = ? OR (email IS NOT NULL AND email = ?))",
+      [userId, username, email],
+    );
+    if (conflict.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "A user with this username or email already exists" });
+    }
+
+    const fields = ["username = ?", "role = ?", "email = ?", "full_name = ?"];
+    const params = [username, role, email, fullName];
+
+    if (password !== undefined && password !== "") {
+      const passwordHash = await bcrypt.hash(password, 10);
+      fields.push("password_hash = ?");
+      params.push(passwordHash);
+    }
+
+    params.push(userId);
+    await pool.query(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, params);
+
+    res.json({ id: userId, username, role, email, full_name: fullName });
+  } catch (err) {
+    if (err && err.code === "ER_DUP_ENTRY") {
+      return res
+        .status(409)
+        .json({ error: "A user with this username or email already exists" });
+    }
+    console.error("Failed to update user", err);
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
 app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 
