@@ -1239,6 +1239,88 @@ app.get("/users", authenticateToken, requireRole("admin"), async (_req, res) => 
   }
 });
 
+// POST /users - create a user (admin only)
+app.post("/users", authenticateToken, requireRole("admin"), async (req, res) => {
+  const { role, password } = req.body;
+  const allowedRoles = ["admin", "operator", "client"];
+
+  if (!allowedRoles.includes(role)) {
+    return res.status(400).json({ error: "Please select a valid role" });
+  }
+  if (!password || String(password).length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters" });
+  }
+
+  // Clients sign in with their email; staff (admin/operator) sign in with a username.
+  let username;
+  let email = null;
+  const fullName = req.body.fullName?.trim() || null;
+
+  if (role === "client") {
+    const normalizedEmail = String(req.body.email || "").trim().toLowerCase();
+    if (!EMAIL_RE.test(normalizedEmail)) {
+      return res
+        .status(400)
+        .json({ error: "Please enter a valid email address" });
+    }
+    if (!fullName) {
+      return res.status(400).json({ error: "Full name is required for clients" });
+    }
+    username = normalizedEmail;
+    email = normalizedEmail;
+  } else {
+    username = String(req.body.username || "").trim();
+    if (!username) {
+      return res.status(400).json({ error: "Username is required" });
+    }
+    const maybeEmail = String(req.body.email || "").trim().toLowerCase();
+    if (maybeEmail) {
+      if (!EMAIL_RE.test(maybeEmail)) {
+        return res
+          .status(400)
+          .json({ error: "Please enter a valid email address" });
+      }
+      email = maybeEmail;
+    }
+  }
+
+  try {
+    const [existing] = await pool.query(
+      "SELECT id FROM users WHERE username = ? OR (email IS NOT NULL AND email = ?)",
+      [username, email],
+    );
+    if (existing.length > 0) {
+      return res
+        .status(409)
+        .json({ error: "A user with this username or email already exists" });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const [result] = await pool.query(
+      "INSERT INTO users (username, password_hash, role, email, full_name) VALUES (?, ?, ?, ?, ?)",
+      [username, passwordHash, role, email, fullName],
+    );
+
+    res.status(201).json({
+      id: result.insertId,
+      username,
+      role,
+      email,
+      full_name: fullName,
+    });
+  } catch (err) {
+    if (err && err.code === "ER_DUP_ENTRY") {
+      return res
+        .status(409)
+        .json({ error: "A user with this username or email already exists" });
+    }
+    console.error("Failed to create user", err);
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
 app.get("/stats", authenticateToken, requireRole("admin"), async (req, res) => {
   const { fromDate, toDate } = req.query;
 

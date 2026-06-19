@@ -3,6 +3,7 @@ import { authFetch } from "../../utils/authUtils";
 import "../../App.css";
 import Pagination from "../../components/common/Pagination";
 import SearchBar from "../../components/SearchBar";
+import CreateUserModal from "../../components/CreateUserModal";
 
 const API_BASE_URL = "/api";
 
@@ -20,6 +21,10 @@ export default function AdminUsers() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
+  // Create modal state
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [createError, setCreateError] = useState("");
 
   useEffect(() => {
     fetchUsers();
@@ -44,6 +49,31 @@ export default function AdminUsers() {
       setLoading(false);
     }
   }
+
+  const handleCreateUser = async (payload) => {
+    try {
+      setCreateLoading(true);
+      setCreateError("");
+
+      const res = await authFetch(`${API_BASE_URL}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to create user");
+      }
+
+      await fetchUsers();
+      setCreateModalOpen(false);
+    } catch (err) {
+      setCreateError(err.message || "Failed to create user");
+    } finally {
+      setCreateLoading(false);
+    }
+  };
 
   // Placeholder action handlers (not wired up yet)
   const handleView = (user) => {
@@ -86,7 +116,10 @@ export default function AdminUsers() {
         <h1 className="checkout-section-title">Users</h1>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {}}
+            onClick={() => {
+              setCreateError("");
+              setCreateModalOpen(true);
+            }}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition font-semibold flex items-center gap-2"
             title="Add User"
           >
@@ -198,6 +231,17 @@ export default function AdminUsers() {
           />
         </div>
       )}
+
+      <CreateUserModal
+        isOpen={createModalOpen}
+        onClose={() => {
+          setCreateModalOpen(false);
+          setCreateError("");
+        }}
+        onSave={handleCreateUser}
+        loading={createLoading}
+        error={createError}
+      />
     </div>
   );
 }
