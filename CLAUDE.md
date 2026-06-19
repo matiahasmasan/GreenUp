@@ -8,7 +8,7 @@ GreenUp is a QR-code-based restaurant ordering system. Clients scan a table's QR
 
 **Roles:** `client` (registered customers), `operator` (kitchen/order staff), `admin` (full access + analytics), plus a legacy `viewer` role in the enum. Guests (no account) can still order; the order is linked to a `user_id` only when a logged-in client checks out.
 
-**Stack:** React 19 + Vite (frontend) · Node.js + Express 5 (backend) · MySQL 8 (database) · JWT auth · TailwindCSS 4
+**Stack:** React 19 + Vite (frontend) · Node.js + Express 5 (backend) · MySQL 8 (database) · JWT auth · TailwindCSS 4 · Anthropic Claude (Sprout chatbot)
 
 ## Commands
 
@@ -35,7 +35,8 @@ No build step for the backend; it runs directly with Node.
 ### Prerequisites
 
 - MySQL 8 running on localhost:3306 with database `restaurant_app`
-- `backend/.env` with `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `PORT`
+- `backend/.env` with `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `PORT`
+- Optional `ANTHROPIC_API_KEY` in `backend/.env` — enables the Sprout chatbot; without it `POST /chat` returns 503
 
 ## Architecture
 
@@ -46,7 +47,7 @@ Hash-based SPA (no React Router). Hash values like `#home`, `#cart`, `#operator-
 **Public routes:** `home`, `cart`, `checkout`, `confirmed`, `feedback`, `login`, `register`  
 **Client-only:** `account` (order history / profile)  
 **Operator/Admin:** `operator-dashboard`, `products`  
-**Admin-only:** `admin-dashboard`
+**Admin-only:** `admin-dashboard`, `users` (user management)
 
 ### State Management
 
@@ -59,7 +60,7 @@ Hash-based SPA (no React Router). Hash values like `#home`, `#cart`, `#operator-
 
 All requests go through Vite's dev proxy (`/api` → `localhost:4000`). Protected requests use `authFetch()` from `frontend/src/utils/authUtils.js`, which auto-attaches the Bearer token.
 
-Backend is a single file: `backend/server.js` (~1500 lines) with Express 5. Per-route middleware:
+Backend is a single file: `backend/server.js` (~1850 lines) with Express 5. Per-route middleware:
 
 1. JSON parser + CORS (global)
 2. `authenticateToken` — JWT verify, attaches `req.user`, **401 if missing/invalid**
@@ -93,13 +94,26 @@ Backend is a single file: `backend/server.js` (~1500 lines) with Express 5. Per-
 
 `order_reviews` has a `UNIQUE(order_id)` constraint — one review per order.
 
+### User Management (admin-only)
+
+`GET/POST/PUT/DELETE /users` (all guarded by `requireRole("admin")`) back the `#users` admin page (`frontend/src/pages/admin/Users.jsx`). Admins create/edit/delete staff and client accounts here. Passwords are hashed with `bcryptjs`; reuse `buildAuthResponse()` semantics for the JWT payload shape when touching auth.
+
+### Sprout Chatbot (Claude)
+
+`ChatBot.jsx` ("Sprout") is a real menu assistant backed by Anthropic Claude — **not** a canned-reply demo.
+
+- **Endpoint:** `POST /chat` (public, no auth). Body: `{ messages: [{ role: "user" | "assistant", content: string }, ...] }`; the last message must be from the user. History is sanitized, capped to the last 20 turns and 2000 chars/message.
+- **Client init:** the `anthropic` client is created only if `ANTHROPIC_API_KEY` is set; otherwise `/chat` returns **503**. Model is `claude-haiku-4-5` (`CHAT_MODEL`).
+- **System prompt:** `buildSproutSystemPrompt()` queries the *live* menu (only `is_available = 1 AND stocks > 0` items) and injects it, so Sprout only recommends real, in-stock dishes and wraps dish names in `**bold**`.
+- **Frontend:** `ChatBot.jsx` maps its message list to the API shape, drops the leading bot greeting (Claude requires the first message to be from the user), and renders `**bold**` spans without `dangerouslySetInnerHTML`.
+
 ### Component Conventions
 
 - Pages in `frontend/src/pages/` act as containers (data fetching + state); split by role subdirectory (`client/`, `operator/`, `admin/`)
 - Modals are dedicated components named `[Feature]Modal.jsx` (e.g., `EditOrderModal.jsx`, `CreateProductModal.jsx`)
 - Shared UI lives in `frontend/src/components/common/` (`Modal.jsx`, `Pagination.jsx`)
 - `authFetch` replaces all `fetch` calls for protected endpoints
-- `ChatBot.jsx` ("Sprout") is a UI-only demo — it returns canned replies with no backend; there is no chat API yet
+- `ChatBot.jsx` ("Sprout") calls the real `POST /chat` Claude endpoint (see Sprout Chatbot above)
 
 ### Auth Utilities (`frontend/src/utils/authUtils.js`)
 
